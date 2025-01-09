@@ -1,0 +1,45 @@
+
+bitcoin-cli help
+bitcoin-cli help getblockchaininfo
+bitcoin-cli getblockchaininfo
+bitcoin-cli help getnetworkinfo (information about p2p network and services that your node supports)
+bitcoin-cli getnetworkinfo
+bitcoin-cli getwalletinfo
+now off to some blockchain exploration commands
+bitcoin-cli getblockcount
+bitcoin-cli getblockhash (block height, for genesis block is zero)
+bitcoin-cli getblock (hash) (verbosity 2) //da pra usar com ou sem verbosity. e no hex to ascii dessa tx de coinbase desse bloco genesis 0  tem a frase do satoshi 
+bitcoin-cli createwallet salario
+bitcoin-cli listwallets
+bitcoin-cli help getnewaddress (mostra os tipos: legacy, p2sh-segwit, bech32, bech32m)
+bitcoin-cli unloadwallet "" //unloads default wallet
+bitcoin-cli loadwallet "" //loads the default wallet back again
+bitcoin-cli --rpcwallet=luciana getnewaddress
+bitcoin-cli getnewaddress "" legacy
+bitcoin-cli getnewaddress "" p2sh-segwit
+bitcoin-cli getnewaddress "" bech32m 
+bitcoin-cli loadwallet ""
+bitcoin-cli unloadwallet luciana
+bitcoin-cli getwalletinfo
+bitcoin-cli getnewaddress
+bitcoin-cli generatetoaddtess
+bitcoin-cli help sendtoaddress
+bitcoin-cli sendtoaddress (address) (numero de bitcoins)
+bitcoin-cli gettransaction (txid)
+e o hex eh todo o txdata
+bitcoin-cli decoderawtransaction (hex)
+//mostra value, vin, vout
+bitcoin-cli unloadwallet ""
+bitcoin-cli loadwallet luciana
+bitcoin-cli getwalletinfo
+bitcoin-cli getnewaddress
+bitcoin-cli unloadwallet
+bitcoin-cli loadwallet ""
+bitcoin-cli -rpcwallet="" sendtoaddress (address) (quantidade btc)
+bitcoin-cli -rpcwallet="" getnewaddress
+bitcoin-cli generatetoaddress (number of blocks) (address) //o output sao block ids
+bitcoin-cli getbalance
+bitcoin-cli -rpcwallet=luciana getwalletinfo
+bitcoin-cli listwallets
+
+
