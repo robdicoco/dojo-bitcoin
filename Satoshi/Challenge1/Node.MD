@@ -50,6 +50,8 @@ sudo useradd -r -m -g bitcoin -s /bin/bash bitcoin
 sudo apt install ca-certificates gnupg gpg wget jq --no-install-recommends -y
 ```
 
+#### Bitcoin Core Download
+
 ```sh
 sudo mkdir -p /opt/bitcoin/28.1
 sudo mkdir -p /opt/blockchain/bitcoin
@@ -61,6 +63,8 @@ sudo rm -rf /tmp/b*
 sudo chown -R bitcoin:bitcoin /opt/blockchain/bitcoin
 
 ```
+
+#### Bitcoin Core Config
 
 ```sh
 sudo mkdir -p /opt/bitcoin/config
@@ -77,6 +81,8 @@ rpcport=18332
 daemon=1
 EOF
 ```
+
+#### Bitcoin Core Service
 
 ```sh
 cat > bitcoind.service << EOF
@@ -95,4 +101,58 @@ ExecStart=/opt/bitcoin/current/bin/bitcoind -conf=/opt/bitcoin/config/bitcoin.co
 [Install]
 WantedBy=multi-user.target
 EOF
+```
+
+#### Bitcoin Move Config
+
+```sh
+sudo cp bitcoin.conf /opt/bitcoin/config/bitcoin.conf
+sudo chown bitcoin:bitcoin /opt/bitcoin/config/bitcoin.conf
+sudo chown -R bitcoin /opt/bitcoin/config
+```
+
+#### Bitcoin set Home
+
+```sh
+sudo ln -sfn /opt/blockchain/bitcoin /home/bitcoin/.bitcoin
+sudo chown -h bitcoin:bitcoin /home/bitcoin
+sudo chown -R bitcoin:bitcoin /home/bitcoin
+```
+
+#### Bitcoin Start Service
+
+```sh
+sudo cp bitcoind.service /etc/systemd/system/bitcoind.service
+sudo systemctl daemon-reload
+sudo systemctl enable bitcoind
+sudo systemctl start bitcoind
+```
+
+### Troubleshooting Service
+
+```sh
+sudo systemctl status bitcoind
+```
+
+Or check the logs:
+
+```sh
+sudo journalctl -fu bitcoind
+```
+
+### Setup Path Bitcoin
+
+```sh
+nano ~/.bashrc
+
+>> Add:
+export PATH=$PATH:/opt/bitcoin/current/bin
+
+source ~/.bashrc
+```
+
+### Test node
+
+```sh
+bitcoin-cli  getblockchaininfo
 ```
