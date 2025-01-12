@@ -3,6 +3,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import subprocess
 import ipaddress
+import json
 from decouple import config
 
 from restrictions import ALLOWED_IPS
@@ -16,9 +17,35 @@ DEBUG_MODE = config("DEBUG_MODE", default=False, cast=bool)
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["5 per minute"], # default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
 )
+
+
+
+def get_scriptPubKey_from_validateaddress(response_str):
+  try:
+    response_data = json.loads(response_str)
+    validation = response_data.get('isvalid') 
+    if validation == True:
+        scriptPubKey =  response_data.get('scriptPubKey') 
+        return (True, scriptPubKey)
+    else:
+        return (False, None)
+  except json.JSONDecodeError:
+    print("Error: Invalid JSON string.")
+    return (None, None)
+
+  
+def get_balance_from_scantxoutset(response_str):
+  try:
+    response_data = json.loads(response_str)
+    amount = response_data.get('total_amount') 
+    return amount
+  except json.JSONDecodeError:
+    print("Error: Invalid JSON string.")
+    return "0"
+
 
 def is_allowed_ip(ip):
     """Checks if the request IP is in the allowlist"""
@@ -67,9 +94,22 @@ def get_blockchain_info():
 @requires_auth
 def get_balance():
     address = request.args.get('address') 
-    result = subprocess.run(['bitcoin-cli', '-regtest', 'getbalance', address], 
+    result1 = subprocess.run(['bitcoin-cli', '-regtest', 'validateaddress', address], 
                            stdout=subprocess.PIPE, text=True)
-    return jsonify(result.stdout)
+    
+    (isvalid, scriptPubKey ) = get_scriptPubKey_from_validateaddress(result1.stdout)
+
+    if isvalid == None:
+        return jsonify({'message': 'Internall error'}), 500 
+    elif isvalid == False: 
+        return jsonify({'message': 'Invalid Address'})
+    else: 
+        data = "[{\"desc\": \"raw("+scriptPubKey+")\"}]"
+        result2 = subprocess.run(['bitcoin-cli', '-regtest', 'scantxoutset', 'start', data], 
+                           stdout=subprocess.PIPE, text=True)
+        balance = get_balance_from_scantxoutset(result2.stdout)
+        
+        return jsonify({'balance': balance})
 
 
 @app.route('/getblockhash', methods=['GET'])
@@ -97,4 +137,4 @@ def get_transaction():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=DEBUG_MODE)
