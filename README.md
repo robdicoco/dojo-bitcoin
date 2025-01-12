@@ -20,6 +20,7 @@
 **🛟 Ajuda**
 
 - o saldo de uma carteira pode ser calculado somando os UTXOs.
+- [Como Configurar um Nó Bitcoin Grátis na Oracle Cloud](https://medium.com/@mauricio.doerr/bitcoin-regtest-node-with-always-free-oracle-cloud-compute-instance-e7412dd0f902)
 
 **⭐️ Engajamento**
 
