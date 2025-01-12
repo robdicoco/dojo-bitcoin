@@ -72,7 +72,7 @@ sudo cat > bitcoin.conf << EOF
 datadir=/opt/blockchain/bitcoin
 printtoconsole=1
 regtest=1
-server=1
+#server=1
 rpcallowip=127.0.0.1
 rpcuser=satoshi
 rpcpassword=${BITCOIN_RPC_PASSWORD:-$(openssl rand -hex 24)}
@@ -106,7 +106,7 @@ EOF
 #### Bitcoin Move Config
 
 ```sh
-sudo cp bitcoin.conf /opt/bitcoin/config/bitcoin.conf
+sudo cp bitcoin.conf ~/.bitcoin/bitcoin.conf
 sudo chown bitcoin:bitcoin /opt/bitcoin/config/bitcoin.conf
 sudo chown -R bitcoin /opt/bitcoin/config
 ```
@@ -119,22 +119,9 @@ sudo chown -h bitcoin:bitcoin /home/bitcoin
 sudo chown -R bitcoin:bitcoin /home/bitcoin
 ```
 
-#### Bitcoin Start Service
-
-```sh
-sudo cp bitcoind.service /etc/systemd/system/bitcoind.service
-sudo systemctl daemon-reload
-sudo systemctl enable bitcoind
-sudo systemctl start bitcoind
-```
+#### ~~Bitcoin Start Service~~
 
 ### Troubleshooting Service
-
-```sh
-sudo systemctl status bitcoind
-```
-
-Or check the logs:
 
 ```sh
 sudo journalctl -fu bitcoind
@@ -154,5 +141,7 @@ source ~/.bashrc
 ### Test node
 
 ```sh
+bitcoind -regtest
+
 bitcoin-cli  getblockchaininfo
 ```

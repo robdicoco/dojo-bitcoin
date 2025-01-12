@@ -1,0 +1,11 @@
+[project]
+name = "btc-bg-app"
+version = "0.1.0"
+description = "Bitcoin API to Shi Satoshi Node - NearX Challenge"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "flask-limiter>=3.10.0",
+    "flask>=3.1.0",
+    "python-decouple>=3.8",
+]
