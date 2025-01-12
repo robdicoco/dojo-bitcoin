@@ -14,9 +14,10 @@ DEBUG_MODE = config("DEBUG_MODE", default=False, cast=bool)
 
 # Configure rate limiting
 limiter = Limiter(
-    app,
-    key_func=get_remote_address,  # Use IP address as the key
-    default_limits=["5 per minute"]  # Limit to 20 requests per minute
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
 )
 
 def is_allowed_ip(ip):
@@ -72,7 +73,6 @@ def get_balance():
 
 
 @app.route('/getblockhash', methods=['GET'])
-@requires_auth
 def get_blockhash():
     block_height = request.args.get('height')
     result = subprocess.run(['bitcoin-cli', '-regtest', 'getblockhash', block_height], 
@@ -81,7 +81,6 @@ def get_blockhash():
 
 
 @app.route('/getblock', methods=['GET'])
-@requires_auth
 def get_block():
     block_hash = request.args.get('hash')
     result = subprocess.run(['bitcoin-cli', '-regtest', 'getblock', block_hash], 
@@ -90,7 +89,6 @@ def get_block():
 
 
 @app.route('/gettransaction', methods=['GET'])
-@requires_auth
 def get_transaction():
     txid = request.args.get('txid')
     result = subprocess.run(['bitcoin-cli', '-regtest', 'gettransaction', txid], 
