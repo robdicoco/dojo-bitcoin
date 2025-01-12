@@ -45,9 +45,9 @@ export default {
 
 <style scoped>
 .blockchain-info {
-  position: absolute;
-  top: 20px;
-  right: 20px;
+  /* position: center; */
+  /* top: 30px; */
+  /* right: 20px; */
   background-color: #f5f5f5;
   padding: 1rem;
   border-radius: 8px;
