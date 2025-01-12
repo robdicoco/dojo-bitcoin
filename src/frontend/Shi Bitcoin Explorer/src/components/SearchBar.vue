@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="search-bar">
     <select v-model="selectedApi">
       <option value="getbalance">Get Balance</option>
       <option value="getblockhash">Get Block Hash</option>
@@ -9,6 +9,7 @@
     </select>
     <input v-model="inputValue" :placeholder="placeholderText" />
     <button @click="fetchData">Search</button>
+    <p v-if="error" class="error-message">{{ error }}</p>
   </div>
 </template>
 
@@ -18,12 +19,14 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      selectedApi: 'getbalance',
-      inputValue: '',
+      selectedApi: 'getbalance', // Default selected API
+      inputValue: '', // User input value
+      error: '', // Error message
     }
   },
   computed: {
     placeholderText() {
+      // Dynamic placeholder based on selected API
       switch (this.selectedApi) {
         case 'getbalance':
           return 'Enter Bitcoin address'
@@ -41,10 +44,20 @@ export default {
     },
   },
   methods: {
-    fetchData() {
-      let url = `/${this.selectedApi}?`
+    async fetchData() {
+      this.error = '' // Clear previous errors
+
+      // Validate input
+      if (!this.inputValue) {
+        this.error = 'Please enter a value.'
+        return
+      }
+
+      // Construct the API URL and parameters
+      let url = `/api/${this.selectedApi}` // Use /api prefix for proxy
       let params = {}
 
+      // Set parameters based on the selected API
       switch (this.selectedApi) {
         case 'getbalance':
           params.address = this.inputValue
@@ -62,20 +75,59 @@ export default {
           params.txid = this.inputValue
           break
         default:
-          console.error('Unknown API selected.')
+          this.error = 'Unknown API selected.'
           return
       }
 
-      url += new URLSearchParams(params)
-      axios
-        .get(url)
-        .then((response) => {
-          this.$emit('data-fetched', response.data)
-        })
-        .catch((error) => {
-          console.error('Error fetching data:', error)
-        })
+      try {
+        // Make the API call
+        const response = await axios.get(url, { params })
+        this.$emit('data-fetched', response.data) // Emit the fetched data
+      } catch (error) {
+        console.error('Error fetching data:', error)
+        this.error = 'Failed to fetch data. Please check the input and try again.'
+      }
     },
   },
 }
 </script>
+
+<style scoped>
+.search-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 2rem;
+  align-items: center;
+}
+
+select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+input {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  flex-grow: 1;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #0056b3;
+}
+
+.error-message {
+  color: red;
+  margin-top: 0.5rem;
+}
+</style>

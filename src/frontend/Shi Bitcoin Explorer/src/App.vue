@@ -1,8 +1,8 @@
 <template>
   <div id="app">
-    <Header @blockchain-info="updateBlockchainInfo" />
-    <SearchBar @data-fetched="showResults" />
-    <Results :searchResults="searchResults" />
+    <Header />
+    <SearchBar @data-fetched="handleDataFetched" />
+    <Results :searchResults="searchResults" :isLoading="isLoading" :error="error" />
   </div>
 </template>
 
@@ -19,17 +19,34 @@ export default {
   },
   data() {
     return {
-      searchResults: {},
+      searchResults: null, // Holds the search results
+      isLoading: false, // Loading state
+      error: '', // Error message
     }
   },
   methods: {
-    updateBlockchainInfo(data) {
-      // Handle blockchain info update if needed
-      console.log('Blockchain Info:', data)
-    },
-    showResults(data) {
-      this.searchResults = data
+    async handleDataFetched(data) {
+      this.isLoading = true
+      this.error = ''
+
+      try {
+        this.searchResults = data // Update search results
+      } catch (error) {
+        console.error('Error handling data:', error)
+        this.error = 'Failed to process data.'
+      } finally {
+        this.isLoading = false
+      }
     },
   },
 }
 </script>
+
+<style>
+#app {
+  font-family: Arial, sans-serif;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+</style>
