@@ -15,14 +15,16 @@ Copy btc_api to run app folder
 
 ### Get Blockchain Information
 
-````sh
+```sh
 curl -X GET http://127.0.0.1:5000/getblockchaininfo
+```
 
 ### Get Balance of an Address
+
 ```sh
 curl -X GET "http://127.0.0.1:5000/getbalance?address=bc1qp08sxlpwjd4950w2dpzxujln5chmcljyhxck6k"
 curl -H "Authorization: Bearer YOUR_SECRET_API_KEY" "http://127.0.0.1:5000/getbalance?address=bc1qp08sxlpwjd4950w2dpzxujln5chmcljyhxck6k"
-````
+```
 
 ### Get Block Hash by Height
 
