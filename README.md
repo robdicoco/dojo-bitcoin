@@ -32,19 +32,10 @@
 | [Learning about Bitcoin on Nearx DOJO](https://www.linkedin.com/posts/mauriciodoerr_bitcoin-regtest-node-with-always-free-oracle-activity-7283312672475860993--1iH?utm_source=share&utm_medium=member_desktop)      | Campeões do Cripto |
 
 
-**Desafio**
+## Semana 2 [Coming soon]
 
-- Subir nó Bitcoin (testnet) em algum cloud
-- Criar um Explorer para conectar no nó que:
-  - Buscar um bloco pelo número
-  - Buscar uma transação pelo hash
-  - Buscar saldo de uma carterira pelo endereço
-- Postar tragetória no Linkedin ou Twitter
+## Semana 3 [Coming soon]
 
-## Semana 2
+## Semana 4 [Coming soon]
 
-## Semana 3
-
-## Semana 4
-
-## Semana 5
+## Semana 5 [Coming soon]
