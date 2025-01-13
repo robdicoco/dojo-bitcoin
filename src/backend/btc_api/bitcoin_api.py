@@ -91,13 +91,20 @@ def get_blockchain_info():
         stdout=subprocess.PIPE,
         text=True,
     )
-    return jsonify(result.stdout)
+    try:
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse blockchain info"}), 500
 
 
 @app.route("/getbalance", methods=["GET"])
 @requires_auth
 def get_balance():
     address = request.args.get("address")
+    if not address:
+        return jsonify({"error": "Address parameter is required"}), 400
+
     result1 = subprocess.run(
         ["bitcoin-cli", "-regtest", "validateaddress", address],
         stdout=subprocess.PIPE,
@@ -106,10 +113,10 @@ def get_balance():
 
     (isvalid, scriptPubKey) = get_scriptPubKey_from_validateaddress(result1.stdout)
 
-    if isvalid == None:
-        return jsonify({"message": "Internall error"}), 500
-    elif isvalid == False:
-        return jsonify({"message": "Invalid Address"})
+    if isvalid is None:
+        return jsonify({"error": "Internal server error"}), 500
+    elif isvalid is False:
+        return jsonify({"error": "Invalid address"}), 400
     else:
         data = '[{"desc": "raw(' + scriptPubKey + ')"}]'
         result2 = subprocess.run(
@@ -117,36 +124,52 @@ def get_balance():
             stdout=subprocess.PIPE,
             text=True,
         )
-        balance = get_balance_from_scantxoutset(result2.stdout)
-
-        return jsonify({"balance": balance})
+        try:
+            balance_data = json.loads(result2.stdout)
+            balance = balance_data.get("total_amount", "0")
+            return jsonify({"balance": balance})
+        except json.JSONDecodeError:
+            return jsonify({"error": "Failed to parse balance data"}), 500
 
 
 @app.route("/getblockhash", methods=["GET"])
 def get_blockhash():
     block_height = request.args.get("height")
+    if not block_height:
+        return jsonify({"error": "Height parameter is required"}), 400
+
     result = subprocess.run(
         ["bitcoin-cli", "-regtest", "getblockhash", block_height],
         stdout=subprocess.PIPE,
         text=True,
     )
-    return jsonify(result.stdout)
+    return jsonify({"blockhash": result.stdout.strip()})
 
 
 @app.route("/getblock", methods=["GET"])
 def get_block():
     block_hash = request.args.get("hash")
+    if not block_hash:
+        return jsonify({"error": "Hash parameter is required"}), 400
+
     result = subprocess.run(
         ["bitcoin-cli", "-regtest", "getblock", block_hash],
         stdout=subprocess.PIPE,
         text=True,
     )
-    return jsonify(result.stdout)
+    try:
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse block data"}), 500
 
 
 @app.route("/gettransaction", methods=["GET"])
 def get_transaction():
     txid = request.args.get("txid")
+    if not txid:
+        return jsonify({"error": "Transaction ID parameter is required"}), 400
+
     result1 = subprocess.run(
         ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
         stdout=subprocess.PIPE,
@@ -154,27 +177,32 @@ def get_transaction():
     )
 
     if result1.stdout == "":
-        return jsonify({"message": "Invalid Address"})
+        return jsonify({"error": "Invalid transaction ID"}), 400
 
     result2 = subprocess.run(
         ["bitcoin-cli", "-regtest", "decoderawtransaction", result1.stdout.strip("\n")],
         stdout=subprocess.PIPE,
         text=True,
     )
-
-    return jsonify(result2.stdout)
+    try:
+        data = json.loads(result2.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse transaction data"}), 500
 
 
 @app.route("/getrawtransaction", methods=["GET"])
 def get_raw_transaction():
     txid = request.args.get("txid")
+    if not txid:
+        return jsonify({"error": "Transaction ID parameter is required"}), 400
+
     result1 = subprocess.run(
         ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
         stdout=subprocess.PIPE,
         text=True,
     )
-
-    return jsonify(result1.stdout)
+    return jsonify({"raw_transaction": result1.stdout.strip()})
 
 
 if __name__ == "__main__":
