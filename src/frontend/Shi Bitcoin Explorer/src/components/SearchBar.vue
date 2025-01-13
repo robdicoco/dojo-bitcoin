@@ -48,7 +48,7 @@ export default {
       this.error = '' // Clear previous errors
 
       // Validate input
-      if (!this.inputValue) {
+      if (!this.inputValue || this.inputValue.trim() === '') {
         this.error = 'Please enter a value.'
         return
       }
@@ -82,7 +82,15 @@ export default {
       try {
         // Make the API call
         const response = await axios.get(url, { params })
-        this.$emit('data-fetched', response.data) // Emit the fetched data
+
+        // Handle raw string responses (e.g., block hash)
+        let data = response.data
+        if (typeof data === 'string') {
+          data = { result: data } // Wrap the string in a JSON object
+        }
+
+        // Emit the fetched data
+        this.$emit('data-fetched', data)
       } catch (error) {
         console.error('Error fetching data:', error)
         if (error.response) {
