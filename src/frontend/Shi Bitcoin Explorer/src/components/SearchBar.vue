@@ -66,7 +66,7 @@ export default {
           params.height = this.inputValue
           break
         case 'getblock':
-          params.block_hash = this.inputValue
+          params.hash = this.inputValue
           break
         case 'gettransaction':
           params.txid = this.inputValue
@@ -85,7 +85,16 @@ export default {
         this.$emit('data-fetched', response.data) // Emit the fetched data
       } catch (error) {
         console.error('Error fetching data:', error)
-        this.error = 'Failed to fetch data. Please check the input and try again.'
+        if (error.response) {
+          // The request was made and the server responded with a status code
+          this.error = `Error: ${error.response.status} - ${error.response.data}`
+        } else if (error.request) {
+          // The request was made but no response was received
+          this.error = 'No response from the server.'
+        } else {
+          // Something happened in setting up the request
+          this.error = 'Error setting up the request.'
+        }
       }
     },
   },

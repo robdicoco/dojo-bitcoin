@@ -4,7 +4,11 @@
     <div v-if="isLoading">Loading...</div>
     <div v-else-if="error" class="error-message">{{ error }}</div>
     <div v-else>
-      <div v-if="Array.isArray(searchResults)">
+      <div v-if="typeof searchResults === 'string'">
+        <!-- Handle HTML error response -->
+        <div v-html="searchResults"></div>
+      </div>
+      <div v-else-if="Array.isArray(searchResults)">
         <!-- Handle array of results -->
         <div v-for="(result, index) in searchResults" :key="index" class="result-item">
           <vue-json-pretty :data="result" />
@@ -29,7 +33,7 @@ export default {
   },
   props: {
     searchResults: {
-      type: [Object, Array], // Accepts both objects and arrays
+      type: [Object, Array, String], // Accepts objects, arrays, or strings
       default: () => null, // Default to null
     },
     isLoading: {

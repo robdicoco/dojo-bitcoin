@@ -1,156 +1,156 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
-    <title>Bitcoin Regtest Explorer</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shi Satoshi Regtest Explorer Test</title>
     <style>
       body {
-        font-family: sans-serif;
-        margin: 20px;
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f9f9f9;
+        color: #333;
       }
       h1 {
         text-align: center;
+        margin-bottom: 20px;
       }
-      label {
-        display: block;
-        margin-bottom: 5px;
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
       }
-      input[type='text'] {
-        width: 300px;
-        padding: 5px;
-        margin-bottom: 10px;
+      .api-call {
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: white;
+        border-radius: 8px;
+        border: 1px solid #ddd;
       }
-      button {
-        padding: 10px 20px;
-        background-color: #4caf50;
+      .api-call h2 {
+        margin-top: 0;
+        font-size: 18px;
+      }
+      .api-call input {
+        width: calc(100% - 120px);
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 14px;
+      }
+      .api-call button {
+        width: 100px;
+        padding: 8px;
+        background-color: #007bff;
         color: white;
         border: none;
-        border-radius: 5px;
+        border-radius: 4px;
         cursor: pointer;
+        font-size: 14px;
+      }
+      .api-call button:hover {
+        background-color: #0056b3;
+      }
+      .results {
+        background-color: white;
+        padding: 20px;
+        border-radius: 8px;
+        border: 1px solid #ddd;
+        margin-top: 20px;
+      }
+      pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
       }
     </style>
   </head>
   <body>
-    <h1>Bitcoin Regtest Explorer</h1>
+    <div class="container">
+      <h1>Shi Satoshi Regtest Explorer Test</h1>
 
-    <h2>Get Blockchain Info</h2>
-    <button onclick="getBlockchainInfo()">Get Info</button>
-    <div id="blockchainInfo"></div>
+      <!-- API Calls with Input Fields -->
+      <div class="api-call">
+        <h2>Get Blockchain Info</h2>
+        <button onclick="callAPI('getblockchaininfo')">Call API</button>
+      </div>
 
-    <h2>Get Balance</h2>
-    <label for="address">Address:</label>
-    <input type="text" id="address" />
-    <button onclick="getBalance()">Get Balance</button>
-    <div id="balance"></div>
+      <div class="api-call">
+        <h2>Get Block Hash</h2>
+        <input type="text" id="height" placeholder="Enter block height" />
+        <button onclick="callAPI('getblockhash?height=' + document.getElementById('height').value)">
+          Call API
+        </button>
+      </div>
 
-    <h2>Get Block Hash</h2>
-    <label for="height">Height:</label>
-    <input type="text" id="height" />
-    <button onclick="getBlockHash()">Get Block Hash</button>
-    <div id="blockHash"></div>
+      <div class="api-call">
+        <h2>Get Block by Hash</h2>
+        <input type="text" id="blockHash" placeholder="Enter block hash" />
+        <button onclick="callAPI('getblock?hash=' + document.getElementById('blockHash').value)">
+          Call API
+        </button>
+      </div>
 
-    <h2>Get Block</h2>
-    <label for="blockHashInput">Block Hash:</label>
-    <input type="text" id="blockHashInput" />
-    <button onclick="getBlock()">Get Block</button>
-    <div id="block"></div>
+      <div class="api-call">
+        <h2>Get Transaction by TXID</h2>
+        <input type="text" id="txid" placeholder="Enter transaction ID" />
+        <button onclick="callAPI('gettransaction?txid=' + document.getElementById('txid').value)">
+          Call API
+        </button>
+      </div>
 
-    <h2>Get Transaction</h2>
-    <label for="txid">TxID:</label>
-    <input type="text" id="txid" />
-    <button onclick="getTransaction()">Get Transaction</button>
-    <div id="transaction"></div>
+      <div class="api-call">
+        <h2>Get Raw Transaction by TXID</h2>
+        <input type="text" id="rawTxid" placeholder="Enter transaction ID" />
+        <button
+          onclick="callAPI('getrawtransaction?txid=' + document.getElementById('rawTxid').value)"
+        >
+          Call API
+        </button>
+      </div>
 
-    <h2>Get Raw Transaction</h2>
-    <label for="rawTxid">TxID:</label>
-    <input type="text" id="rawTxid" />
-    <button onclick="getRawTransaction()">Get Raw Transaction</button>
-    <div id="rawTransaction"></div>
+      <div class="api-call">
+        <h2>Get Balance by Address</h2>
+        <input type="text" id="address" placeholder="Enter Bitcoin address" />
+        <button onclick="callAPI('getbalance?address=' + document.getElementById('address').value)">
+          Call API
+        </button>
+      </div>
+
+      <!-- Results Section -->
+      <div class="results">
+        <h2>Results</h2>
+        <pre id="result"></pre>
+      </div>
+    </div>
 
     <script>
-      function makeRequest(method, url, data = null) {
-        return fetch(url, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(data),
-        }).then((response) => {
+      // Base URL for the API
+      const baseURL = 'http://127.0.0.1:5000'
+
+      // Function to call the API
+      async function callAPI(endpoint) {
+        const url = `${baseURL}/${endpoint}`
+        const resultElement = document.getElementById('result')
+
+        try {
+          // Show loading message
+          resultElement.textContent = 'Loading...'
+
+          // Fetch data from the API
+          const response = await fetch(url)
           if (!response.ok) {
-            throw new Error('Network response was not ok')
+            throw new Error(`HTTP error! Status: ${response.status}`)
           }
-          return response.json()
-        })
-      }
 
-      function getBlockchainInfo() {
-        makeRequest('GET', '/getblockchaininfo')
-          .then((data) => {
-            document.getElementById('blockchainInfo').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('blockchainInfo').innerHTML = 'Error fetching blockchain info.'
-          })
-      }
+          // Parse the JSON response
+          const data = await response.json()
 
-      function getBalance() {
-        const address = document.getElementById('address').value
-        makeRequest('GET', `/getbalance?address=${address}`)
-          .then((data) => {
-            document.getElementById('balance').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('balance').innerHTML = 'Error fetching balance.'
-          })
-      }
-
-      function getBlockHash() {
-        const height = document.getElementById('height').value
-        makeRequest('GET', `/getblockhash?height=${height}`)
-          .then((data) => {
-            document.getElementById('blockHash').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('blockHash').innerHTML = 'Error fetching block hash.'
-          })
-      }
-
-      function getBlock() {
-        const blockHash = document.getElementById('blockHashInput').value
-        makeRequest('GET', `/getblock?hash=${blockHash}`)
-          .then((data) => {
-            document.getElementById('block').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('block').innerHTML = 'Error fetching block.'
-          })
-      }
-
-      function getTransaction() {
-        const txid = document.getElementById('txid').value
-        makeRequest('GET', `/gettransaction?txid=${txid}`)
-          .then((data) => {
-            document.getElementById('transaction').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('transaction').innerHTML = 'Error fetching transaction.'
-          })
-      }
-
-      function getRawTransaction() {
-        const txid = document.getElementById('rawTxid').value
-        makeRequest('GET', `/getrawtransaction?txid=${txid}`)
-          .then((data) => {
-            document.getElementById('rawTransaction').innerHTML = JSON.stringify(data, null, 2)
-          })
-          .catch((error) => {
-            console.error('Error:', error)
-            document.getElementById('rawTransaction').innerHTML = 'Error fetching raw transaction.'
-          })
+          // Display the result
+          resultElement.textContent = JSON.stringify(data, null, 2)
+        } catch (error) {
+          // Display the error
+          resultElement.textContent = `Error: ${error.message}`
+        }
       }
     </script>
   </body>
