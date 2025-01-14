@@ -1,13 +1,9 @@
 <template>
   <div class="search-bar">
-    <select v-model="selectedApi">
-      <option value="getbalance">Get Balance</option>
-      <option value="getblockhash">Get Block Hash</option>
-      <option value="getblock">Get Block</option>
-      <option value="gettransaction">Get Transaction</option>
-      <option value="getrawtransaction">Get Raw Transaction</option>
-    </select>
-    <input v-model="inputValue" :placeholder="placeholderText" />
+    <input
+      v-model="inputValue"
+      placeholder="Enter block height, block hash, transaction ID, or address"
+    />
     <button @click="fetchData">Search</button>
     <p v-if="error" class="error-message">{{ error }}</p>
   </div>
@@ -19,31 +15,41 @@ import axios from 'axios'
 export default {
   data() {
     return {
-      selectedApi: 'getbalance', // Default selected API
       inputValue: '', // User input value
       error: '', // Error message
     }
   },
-  computed: {
-    placeholderText() {
-      // Dynamic placeholder based on selected API
-      switch (this.selectedApi) {
-        case 'getbalance':
-          return 'Enter Bitcoin address'
-        case 'getblockhash':
-          return 'Enter block height'
-        case 'getblock':
-          return 'Enter block hash'
-        case 'gettransaction':
-          return 'Enter transaction ID'
-        case 'getrawtransaction':
-          return 'Enter transaction ID'
-        default:
-          return 'Enter value'
-      }
-    },
-  },
   methods: {
+    // Function to detect the type of input
+    detectInputType(input) {
+      input = input.trim()
+
+      // Check if input is a block height (numeric)
+      if (/^\d+$/.test(input)) {
+        return 'blockheight'
+      }
+
+      // Check if input is a block hash (64-character hex string)
+      if (/^[a-fA-F0-9]{64}$/.test(input)) {
+        // Check if the input is a block hash or transaction ID
+        // (Block hashes and transaction IDs are both 64-character hex strings)
+        // For now, assume it's a transaction ID if it starts with '3b' (common for regtest txids)
+        if (input.startsWith('3b')) {
+          return 'txid'
+        } else {
+          return 'blockhash'
+        }
+      }
+
+      // Check if input is a Bitcoin address (starts with 'bcrt1' for regtest)
+      if (/^bcrt1[a-zA-HJ-NP-Z0-9]{25,39}$/.test(input)) {
+        return 'address'
+      }
+
+      // If no match, return unknown
+      return 'unknown'
+    },
+
     async fetchData() {
       this.error = '' // Clear previous errors
 
@@ -53,42 +59,45 @@ export default {
         return
       }
 
-      // Construct the API URL and parameters
-      let url = `/api/${this.selectedApi}` // Use /api prefix for proxy
+      // Detect the input type
+      const inputType = this.detectInputType(this.inputValue)
+
+      // Determine the API endpoint based on the input type
+      let endpoint = ''
       let params = {}
 
-      // Set parameters based on the selected API
-      switch (this.selectedApi) {
-        case 'getbalance':
-          params.address = this.inputValue
+      switch (inputType) {
+        case 'blockheight':
+          endpoint = 'getblockhash'
+          params = { height: this.inputValue }
           break
-        case 'getblockhash':
-          params.height = this.inputValue
+        case 'blockhash':
+          endpoint = 'getblock'
+          params = { hash: this.inputValue }
           break
-        case 'getblock':
-          params.hash = this.inputValue
+        case 'txid':
+          endpoint = 'gettransaction'
+          params = { txid: this.inputValue }
           break
-        case 'gettransaction':
-          params.txid = this.inputValue
-          break
-        case 'getrawtransaction':
-          params.txid = this.inputValue
+        case 'address':
+          endpoint = 'getbalance'
+          params = { address: this.inputValue }
           break
         default:
-          this.error = 'Unknown API selected.'
+          this.error =
+            'Invalid input. Please enter a valid block height, block hash, transaction ID, or address.'
           return
       }
 
       try {
         // Make the API call
-        const response = await axios.get(url, { params })
+        const response = await axios.get(`/api/${endpoint}`, { params })
 
         // Handle raw string responses (e.g., block hash)
         let data = response.data
-        // if (typeof data === 'string') {
-        //   data = { result: data } // Wrap the string in a JSON object
-        // }
-        this.$emit('data-fetched', response.data) // Emit the fetched data
+        if (typeof data === 'string') {
+          data = { result: data } // Wrap the string in a JSON object
+        }
 
         // Emit the fetched data
         this.$emit('data-fetched', data)
@@ -118,17 +127,14 @@ export default {
   align-items: center;
 }
 
-select {
-  padding: 0.5rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-}
-
 input {
   padding: 0.5rem;
   border: 1px solid #ddd;
   border-radius: 4px;
   flex-grow: 1;
+  font-size: 1rem;
+  max-width: 500px;
+  width: 100%;
 }
 
 button {
