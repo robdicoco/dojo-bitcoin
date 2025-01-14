@@ -85,9 +85,10 @@ export default {
 
         // Handle raw string responses (e.g., block hash)
         let data = response.data
-        if (typeof data === 'string') {
-          data = { result: data } // Wrap the string in a JSON object
-        }
+        // if (typeof data === 'string') {
+        //   data = { result: data } // Wrap the string in a JSON object
+        // }
+        this.$emit('data-fetched', response.data) // Emit the fetched data
 
         // Emit the fetched data
         this.$emit('data-fetched', data)
