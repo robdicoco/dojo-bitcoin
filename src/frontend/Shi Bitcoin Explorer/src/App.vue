@@ -1,5 +1,13 @@
 <template>
-  <div id="app">
+  <div id="app" :class="theme">
+    <!-- Theme Toggle Switch -->
+    <div class="theme-toggle">
+      <label>
+        <input type="checkbox" v-model="isDarkMode" @change="toggleTheme" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
     <!-- Site Title (Top Left Corner) -->
     <div class="site-title">Shi(し) Satoshi Explorer</div>
 
@@ -14,7 +22,6 @@
     </div>
 
     <!-- Blockchain Info (Below Results) -->
-
     <div class="blockchain-wrapper">
       <BlockChainData />
     </div>
@@ -51,6 +58,8 @@ export default {
       searchResults: null, // Holds the search results
       isLoading: false, // Loading state
       error: '', // Error message
+      isDarkMode: false, // Dark mode state
+      theme: 'light', // Current theme
     }
   },
   methods: {
@@ -67,6 +76,16 @@ export default {
         this.isLoading = false
       }
     },
+    toggleTheme() {
+      this.theme = this.isDarkMode ? 'dark' : 'light'
+      document.documentElement.setAttribute('data-theme', this.theme)
+    },
+  },
+  mounted() {
+    // Initialize theme based on user preference or system settings
+    const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+    this.isDarkMode = prefersDarkMode
+    this.toggleTheme()
   },
 }
 </script>
@@ -83,6 +102,84 @@ export default {
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+}
+
+/* Light Theme (Default) */
+#app.light {
+  --background-color: #f9f9f9;
+  --text-color: #333;
+  --border-color: #ddd;
+  --button-bg-color: #007bff;
+  --button-hover-bg-color: #0056b3;
+  --error-color: red;
+}
+
+/* Dark Theme */
+#app.dark {
+  --background-color: #1a1a1a;
+  --text-color: #f9f9f9;
+  --border-color: #444;
+  --button-bg-color: #0056b3;
+  --button-hover-bg-color: #007bff;
+  --error-color: #ff4d4d;
+}
+
+/* Apply CSS Variables */
+#app {
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+/* Theme Toggle Switch */
+.theme-toggle {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.theme-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.theme-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+  background-color: #ccc;
+  border-radius: 34px;
+  transition: background-color 0.3s;
+}
+
+.slider::before {
+  content: '';
+  position: absolute;
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+input:checked + .slider {
+  background-color: var(--button-bg-color);
+}
+
+input:checked + .slider::before {
+  transform: translateX(26px);
 }
 
 /* Site Title (Top Left Corner) */
@@ -92,7 +189,7 @@ export default {
   /* left: 20px; */
   font-size: 1.5rem;
   font-weight: bold;
-  color: #333;
+  color: var(--text-color);
 }
 
 /* Search Bar Container (Top Center) */
@@ -109,12 +206,6 @@ export default {
   margin-top: 20px; /* Space between search bar and results */
 }
 
-/* BlockChainData Wrapper (Below Results) */
-.blockchain-wrapper {
-  width: 100%;
-  margin-top: 20px; /* Space between search bar and results */
-}
-
 /* GitHub Links (Bottom) */
 .github-links {
   position: center;
@@ -127,7 +218,7 @@ export default {
 }
 
 .github-links a {
-  color: #007bff;
+  color: var(--button-bg-color);
   text-decoration: none;
   font-weight: bold;
   transition:
@@ -136,7 +227,7 @@ export default {
 }
 
 .github-links a:hover {
-  color: #0056b3;
+  color: var(--button-hover-bg-color);
   transform: scale(1.1); /* Enlarge on hover */
 }
 
@@ -150,11 +241,11 @@ export default {
   /* width: 100%; */
   /* transform: translateX(-50%); */
   font-size: 0.9rem;
-  color: #666;
+  color: var(--text-color);
 }
 
 .source-code a {
-  color: #007bff;
+  color: var(--button-bg-color);
   text-decoration: none;
 }
 
