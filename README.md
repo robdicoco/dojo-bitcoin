@@ -15,24 +15,23 @@
 -   **Balance Check:** Query your node's API to get the balance of any wallet.
 -   **Transactions:** Send Bitcoin from one wallet to another using your node.
 
-**Technical Requirements:**
+### Solutions details:
+
+## Front End
+
+-   **Programming Language:** Javascrypt / TypeScript
+-   **Framework:** Vue
+-   **Cloud Platform:** Linode
+
+## Back End
 
 -   **Programming Language:** Python
--   **Framework:** [Specify any frameworks used, e.g., Flask, Django]
--   **Bitcoin Libraries:** [Specify Bitcoin libraries used, e.g., bitcoinlib, pycoin]
--   **Cloud Platform:** AWS, DigitalOcean, or similar
+-   **Framework:** Flask
+-   **Bitcoin Libraries:** bitcoinlib,
+-   **Cloud Platform:** Linode
 
-**Evaluation:**
+### Participants:
 
--   **Functionality:** Correct implementation of all features.
--   **Code Quality:** Clean, well-structured, and commented code.
--   **Documentation:** Clear and concise documentation of your project.
--   **Sharing:** Active participation in the community by sharing your progress and insights.
-
-**Additional Tips:**
-
--   Consider using a containerization platform like Docker for easier deployment.
--   Explore the use of a Bitcoin full node or a lightweight SPV client.
--   Implement security best practices to protect user funds.
-
-**Let's build the future of Bitcoin together!\*\***Hashtags:\*\* #Bitcoin #Blockchain #Python #Developer #Challenge #ShiSatoshiDojo
+-   <a href="https://github.com/robdicoco" target="_blank">robdicoco</a>
+-   <a href="https://github.com/Edugera" target="_blank">Edugera</a>
+-   <a href="https://github.com/alfatektecnologia" target="_blank">alfatektecnologia</a>
