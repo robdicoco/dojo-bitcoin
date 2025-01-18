@@ -1,18 +1,38 @@
-# Dojo Bitcoin
+# Shi(し) Satoshi - Bitcoin Dojo Challenge
 
-## ✅ Semana 1
+### Challenge 1: Bitcoin Node and Explorer
 
-**✍️ Aula**
+-   **Set up:** Deploy a Bitcoin testnet node on a cloud platform like AWS or DigitalOcean.
+-   **Explorer:** Build an application to interact with the node:
+    -   **Block Search:** Retrieve detailed information for a specific block.
+    -   **Transaction Lookup:** Find transactions by their hash.
+    -   **Wallet Balance:** Query the balance of any Bitcoin address.
+-   **Share:** Document your process and share insights on LinkedIn or Twitter using the hashtag #ShiSatoshiDojo.
 
-- Subir nó Bitcoin (testnet) local.
-- Interagir com o nó Bitcoin usando RPC e CLI.
-- Estrutura de blocos e transações no Bitcoin.
+### Challenge 2: Python CLI Wallet and Explorer
 
-**🤺 Desafio**
+-   **Wallet Creation:** Develop a command-line interface to generate new Bitcoin addresses.
+-   **Balance Check:** Query your node's API to get the balance of any wallet.
+-   **Transactions:** Send Bitcoin from one wallet to another using your node.
 
-- Subir nó Bitcoin (testnet) em um serviço de cloud (ex.: AWS, DigitalOcean).
-- Criar um Explorer que conecte ao nó Bitcoin, com as seguintes funcionalidades:
-  - Buscar um bloco pelo número.
-  - Buscar uma transação pelo hash.
-  - Exibir o saldo de uma carteira com base no endereço.
-- Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
+**Technical Requirements:**
+
+-   **Programming Language:** Python
+-   **Framework:** [Specify any frameworks used, e.g., Flask, Django]
+-   **Bitcoin Libraries:** [Specify Bitcoin libraries used, e.g., bitcoinlib, pycoin]
+-   **Cloud Platform:** AWS, DigitalOcean, or similar
+
+**Evaluation:**
+
+-   **Functionality:** Correct implementation of all features.
+-   **Code Quality:** Clean, well-structured, and commented code.
+-   **Documentation:** Clear and concise documentation of your project.
+-   **Sharing:** Active participation in the community by sharing your progress and insights.
+
+**Additional Tips:**
+
+-   Consider using a containerization platform like Docker for easier deployment.
+-   Explore the use of a Bitcoin full node or a lightweight SPV client.
+-   Implement security best practices to protect user funds.
+
+**Let's build the future of Bitcoin together!\*\***Hashtags:\*\* #Bitcoin #Blockchain #Python #Developer #Challenge #ShiSatoshiDojo
