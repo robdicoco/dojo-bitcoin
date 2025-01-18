@@ -280,11 +280,11 @@ def send_transaction():
 
 if __name__ == "__main__":
     # context=('/home/robdc/apps/keys/server.crt', '/home/robdc/apps/keys/server.key'))
-    context = (
-        "/home/robdc/apps/keys/fullchain.pem",
-        "/home/robdc/apps/keys/privkey.pem",
-    )
-    app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
+    # context = (
+    #     "/home/robdc/apps/keys/fullchain.pem",
+    #     "/home/robdc/apps/keys/privkey.pem",
+    # )
+    # app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
 
-    #  app.run(debug=DEBUG_MODE)
+    app.run(debug=DEBUG_MODE)
     #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
