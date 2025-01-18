@@ -5,6 +5,8 @@ import subprocess
 import ipaddress
 import json
 from decouple import config
+from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
+from bitcoinlib.services.services import Service
 
 from restrictions import ALLOWED_IPS
 
@@ -205,5 +207,75 @@ def get_raw_transaction():
     return jsonify({"raw_transaction": result1.stdout.strip()})
 
 
+@app.route("/generate_addresses", methods=["POST"])
+@requires_auth
+def generate_addresses():
+    try:
+        data = request.get_json()
+        count = data.get("count", 1)
+        wallet_name = data.get("wallet_name", "my_wallet")
+
+        # Delete wallet if it already exists
+        wallet_delete_if_exists(wallet_name)
+
+        # Create a new wallet
+        wallet = Wallet.create(wallet_name)
+
+        addresses = []
+        for _ in range(count):
+            address = wallet.get_key().address
+            addresses.append(address)
+
+        return jsonify({"addresses": addresses})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/check_balance", methods=["GET"])
+@requires_auth
+def check_balance():
+    try:
+        address = request.args.get("address")
+        if not address:
+            return jsonify({"error": "Address parameter is required"}), 400
+
+        service = Service()
+        balance = service.getbalance(address)
+
+        return jsonify({"balance": balance})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/send_transaction", methods=["POST"])
+@requires_auth
+def send_transaction():
+    try:
+        data = request.get_json()
+        from_address = data.get("from_address")
+        to_address = data.get("to_address")
+        amount = data.get("amount")
+
+        if not from_address or not to_address or not amount:
+            return (
+                jsonify({"error": "from_address, to_address, and amount are required"}),
+                400,
+            )
+
+        service = Service()
+        txid = service.send(from_address, to_address, amount)
+
+        return jsonify({"txid": txid})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
-    app.run(debug=DEBUG_MODE)  # app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
+    #  app.run(debug=DEBUG_MODE)
+    #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
+    context = (
+        "/home/robdc/apps/keys/fullchain.pem",
+        "/home/robdc/apps/keys/privkey.pem",
+    )
+    app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
+    # ssl_context=('/home/robdc/apps/keys/server.crt', '/home/robdc/apps/keys/server.key'))

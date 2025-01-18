@@ -19,14 +19,14 @@
 
 ## Front End
 
--   **Programming Language:** Javascrypt / TypeScript
+-   **Programming Language:** Vue / Javascrypt / TypeScript
 -   **Framework:** Vue
 -   **Cloud Platform:** Linode
 
 ## Back End
 
 -   **Programming Language:** Python
--   **Framework:** Flask
+-   **Framework:** Flask/ uv
 -   **Bitcoin Libraries:** bitcoinlib,
 -   **Cloud Platform:** Linode
 
