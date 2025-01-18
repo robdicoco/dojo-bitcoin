@@ -4,6 +4,7 @@
 
 **✍️ Aula**
 
+- **[Vídeo da Aula 1](https://www.youtube.com/watch?v=8NylsXut8-M)**
 - Subir nó Bitcoin (testnet) local.
 - Interagir com o nó Bitcoin usando RPC e CLI.
 - Estrutura de blocos e transações no Bitcoin.
@@ -16,12 +17,8 @@
   - Buscar uma transação pelo hash.
   - Exibir o saldo de uma carteira com base no endereço.
 - Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
-
-**🛟 Ajuda**
-
-- o saldo de uma carteira pode ser calculado somando os UTXOs.
-- [Como Configurar um Nó Bitcoin Grátis na Oracle Cloud](https://medium.com/@mauricio.doerr/bitcoin-regtest-node-with-always-free-oracle-cloud-compute-instance-e7412dd0f902)
-- [Aula 1](https://www.youtube.com/watch?v=8NylsXut8-M)
+- **Dica 1:** o saldo de uma carteira pode ser calculado somando os UTXOs.
+- **Dica 2:** [Como Configurar um Nó Bitcoin Grátis na Oracle Cloud](https://medium.com/@mauricio.doerr/bitcoin-regtest-node-with-always-free-oracle-cloud-compute-instance-e7412dd0f902)
 
 **⭐️ Engajamento**
 
@@ -43,6 +40,7 @@
 
 **✍️ Aula**
 
+- [Vídeo da Aula 2](https://www.youtube.com/watch?v=eRlOK_uNXRA)
 - Introdução à criptografia (hashes, chaves públicas/privadas, assinaturas digitais).
 - Usando SDK Bitcoin com Python para criar e manipular transações.
 - Conceitos de UTXO e taxas de transação.
@@ -54,10 +52,9 @@
   - Consulte o saldo de uma carteira usando API do seu nó.
   - Envie transações de uma carteira para outras usando seu nó.
 - Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
-
-**🛟 Ajuda**
-
-- [Aula 2](https://www.youtube.com/watch?v=eRlOK_uNXRA)
+- **Dica 1:** [Biblioteca para fazer Desktop Python (Flet)](https://flet.dev)
+- **Dica 2:** [Biblioteca para integrar com Bitcoin Python (BitcoinLib)](https://github.com/1200wd/bitcoinlib)
+- **Dica 2:** [Biblioteca para integrar com Bitcoin Python (Bit)](https://ofek.dev/bit/)
 
 **⭐️ Engajamento**
 
@@ -68,7 +65,7 @@
 
 ## ⏰ Semana 3
 
-**Aula**
+**✍️ Aula**
 
 - Introdução ao Bitcoin Script: como criar scripts personalizados.
 - Gerando transações customizadas com SDK Bitcoin.
@@ -82,10 +79,8 @@
   - Consulte e valide o registro no blockchain.
   - Interface simples para upload e consulta.
 - Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
+- **Dica 1:** Diagrama de Sequencia para usar em https://sequencediagram.org
 
-**Ajuda**
-
-- Diagrama de Sequencia para usar em https://sequencediagram.org
 
 ```
 title Registro de Direitos Autorais com Bitcoin
