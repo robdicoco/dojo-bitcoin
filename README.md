@@ -31,7 +31,7 @@
 | [Começando NX DOJO Bitcoin 101](https://www.linkedin.com/posts/vanessabarros-tech_come%C3%A7ando-nx-dojo-bitcoin-101-metas-do-dojo-activity-7282157167636287488-9U6H?utm_source=share&utm_medium=member_desktop)    | Lendas da Razão    |
 | [Learning about Bitcoin on Nearx DOJO](https://www.linkedin.com/posts/mauriciodoerr_bitcoin-regtest-node-with-always-free-oracle-activity-7283312672475860993--1iH?utm_source=share&utm_medium=member_desktop)      | Campeões do Cripto |
 
-## ⏰ Semana 2
+## ✅ Semana 2
 
 **Aula**
 
@@ -41,7 +41,7 @@
 
 **Desafio**
 
-- Criar uma Wallet CLI com Python que:
+- Criar uma Wallet CLI/DESKTOP com Python/lang que:
   - Gere múltiplos endereços Bitcoin.
   - Consulte o saldo de uma carteira usando API do seu nó.
   - Envie transações de uma carteira para outras usando seu nó.
