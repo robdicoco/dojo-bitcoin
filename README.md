@@ -39,12 +39,110 @@
 | [Dojo Bitcoin Challenge: Overcoming Obstacles in Block Explorer Development](https://www.linkedin.com/posts/zackson-pessoa_softwaredevelopment-bitcoin-blockexplorer-activity-7284721160909447169-9OHB/)      | Anácriptos|
  
 
+## ✅ Semana 2
 
+**Aula**
 
-## Semana 2 [Coming soon]
+- Introdução à criptografia (hashes, chaves públicas/privadas, assinaturas digitais).
+- Usando SDK Bitcoin com Python para criar e manipular transações.
+- Conceitos de UTXO e taxas de transação.
 
-## Semana 3 [Coming soon]
+**Desafio**
 
-## Semana 4 [Coming soon]
+- Criar uma Wallet CLI/DESKTOP com Python/lang que:
+  - Gere múltiplos endereços Bitcoin.
+  - Consulte o saldo de uma carteira usando API do seu nó.
+  - Envie transações de uma carteira para outras usando seu nó.
+- Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
 
-## Semana 5 [Coming soon]
+---
+
+## ⏰ Semana 3
+
+**Aula**
+
+- Introdução ao Bitcoin Script: como criar scripts personalizados.
+- Gerando transações customizadas com SDK Bitcoin.
+
+**Desafio**
+
+- Criar uma plataforma de registro de direitos autorais que:
+  - Qualquer user pode subir um documento.
+  - Usuário precisa pagar para registrar documento.
+  - Validar pagamento.
+  - Consulte e valide o registro no blockchain.
+  - Interface simples para upload e consulta.
+- Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
+
+**Ajuda**
+
+- Diagrama de Sequencia para usar em https://sequencediagram.org
+
+```
+title Registro de Direitos Autorais com Bitcoin
+
+participant "Backend" as Backend
+participant "Bitcoin (Testnet)" as Blockchain
+participant "User" as User
+participant "Frontend" as Frontend
+
+User->>Frontend: Upload do Documento
+Frontend->>Frontend: Geração do Hash (SHA-256)
+
+# PARALLEL
+Frontend->>Backend: Novo docs adicionado na Plataforma [enviar hash e docs]
+Backend->>Backend: Cria nova carteira para receber pagamento
+Backend->Backend: Aguarda Confirmação de Pagamento
+Frontend->>User: Exibe Status do docs [Pagamento Pendente]
+# PARALLEL
+
+User->>Blockchain: Realiza Pagamento
+Blockchain->>Backend: Evento de pagamento
+Backend->Backend: Validar valor e carteira de pagamento
+
+# PARALLEL
+Backend->>Frontend: Confirmação do Pagamento
+Frontend->>Frontend: Atualiza Status: "Mineração Pendente"
+Backend->>Blockchain: Transmite Transação com OP_RETURN
+Blockchain->>Backend: Confirmação de Mineração
+Backend->>Frontend: Atualiza Status: "Minerado Confimada"
+# PARALLEL
+
+Frontend->>Frontend: Atualiza Status: "Mineração Confimada"
+Frontend->>User: Link para Documento na Blockchain
+```
+
+---
+
+## ⏰ Semana 4
+
+**Aula**
+
+- Conceitos da Lightning Network: canais de pagamento, BREEZ
+- Configuração de um nó Lightning local.
+- Interação com APIs Lightning (LND REST/gRPC).
+
+**Desafio**
+- Criar um chat de texto que:
+  - Usuário envia mensagens para outros usuários.
+  - É possivel enviar pagamentos dentro do chat.
+  - Mensagens são exibidas no frontend.
+  - Backend gerencia pagamentos e confirmações.
+- Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
+
+---
+
+## ⏰ Semana 5
+
+**Aula**
+
+- Fundamentos do Taproot
+- Criando e assinando transações Taproot.
+
+**Desafio**
+
+- Airdrop de NFTs:
+  - Criar NFTs e subir para IPFS (image + json metadata)
+  - Implementar um contrato taproot para os NFTs
+  - Criar uma plataforma para os usuários visualizarem seus Assets.
+- Documentar e compartilhar a trajetória no LinkedIn ou Twitter.
