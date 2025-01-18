@@ -8,12 +8,27 @@ from decouple import config
 from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
 from bitcoinlib.services.services import Service
 
+
 from restrictions import ALLOWED_IPS
 
 app = Flask(__name__)
 
 API_KEY = config("TEST_API_KEY")
+RPC_PASS_LIB = config("LIB_PASS")
 DEBUG_MODE = config("DEBUG_MODE", default=False, cast=bool)
+
+# Use regtest network
+# service = Service(network="regtest")
+service = Service(
+    network="regtest",
+    providers={
+        "bitcoind": {
+            "url": "http://127.0.0.1:18443",  # RPC URL
+            "username": "bitcoinlib",  # RPC username
+            "password": RPC_PASS_LIB,  # RPC password
+        }
+    },
+)
 
 # Configure rate limiting
 limiter = Limiter(
@@ -247,7 +262,7 @@ def check_balance():
         if not address:
             return jsonify({"error": "Address parameter is required"}), 400
 
-        service = Service()
+        # service = Service()
         balance = service.getbalance(address)
 
         return jsonify({"balance": balance})
@@ -270,7 +285,7 @@ def send_transaction():
                 400,
             )
 
-        service = Service()
+        # service = Service()
         txid = service.send(from_address, to_address, amount)
 
         return jsonify({"txid": txid})
