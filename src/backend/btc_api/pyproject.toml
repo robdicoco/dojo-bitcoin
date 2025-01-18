@@ -8,4 +8,5 @@ dependencies = [
     "flask-limiter>=3.10.0",
     "flask>=3.1.0",
     "python-decouple>=3.8",
+    "bitcoinlib>=0.7.1",
 ]

@@ -68,14 +68,15 @@ def authenticate():
 def requires_auth(f):
     """Decorator to check for API key in request headers"""
 
-    def decorated(*args, **kwargs):
-        auth = request.headers.get("Authorization")
-        if not auth or not auth.startswith("Bearer "):
-            return authenticate()
+    def decorated_function(*args, **kwargs):
+        if not DEBUG_MODE:
+            auth = request.headers.get("Authorization")
+            if not auth or not auth.startswith("Bearer "):
+                return authenticate()
 
-        token = auth.split(" ")[1]
-        if token != API_KEY:
-            return authenticate()
+            token = auth.split(" ")[1]
+            if token != API_KEY:
+                return authenticate()
 
         # Check IP address
         if not is_allowed_ip(request.remote_addr):
@@ -83,10 +84,13 @@ def requires_auth(f):
 
         return f(*args, **kwargs)
 
-    return decorated
+    # Assign a unique name to the decorated function
+    decorated_function.__name__ = f.__name__ + "_decorated"
+    return decorated_function
 
 
 @app.route("/getblockchaininfo", methods=["GET"])
+@requires_auth
 def get_blockchain_info():
     result = subprocess.run(
         ["bitcoin-cli", "-regtest", "getblockchaininfo"],
@@ -135,6 +139,7 @@ def get_balance():
 
 
 @app.route("/getblockhash", methods=["GET"])
+@requires_auth
 def get_blockhash():
     block_height = request.args.get("height")
     if not block_height:
@@ -149,6 +154,7 @@ def get_blockhash():
 
 
 @app.route("/getblock", methods=["GET"])
+@requires_auth
 def get_block():
     block_hash = request.args.get("hash")
     if not block_hash:
@@ -167,6 +173,7 @@ def get_block():
 
 
 @app.route("/gettransaction", methods=["GET"])
+@requires_auth
 def get_transaction():
     txid = request.args.get("txid")
     if not txid:
@@ -194,6 +201,7 @@ def get_transaction():
 
 
 @app.route("/getrawtransaction", methods=["GET"])
+@requires_auth
 def get_raw_transaction():
     txid = request.args.get("txid")
     if not txid:
@@ -271,11 +279,12 @@ def send_transaction():
 
 
 if __name__ == "__main__":
-    #  app.run(debug=DEBUG_MODE)
-    #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
+    # context=('/home/robdc/apps/keys/server.crt', '/home/robdc/apps/keys/server.key'))
     context = (
         "/home/robdc/apps/keys/fullchain.pem",
         "/home/robdc/apps/keys/privkey.pem",
     )
     app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
-    # ssl_context=('/home/robdc/apps/keys/server.crt', '/home/robdc/apps/keys/server.key'))
+
+    #  app.run(debug=DEBUG_MODE)
+    #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
