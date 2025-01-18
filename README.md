@@ -70,7 +70,7 @@
 - Introdução ao Bitcoin Script: como criar scripts personalizados.
 - Gerando transações customizadas com SDK Bitcoin.
 
-**Desafio**
+**🤺 Desafio**
 
 - Criar uma plataforma de registro de direitos autorais que:
   - Qualquer user pode subir um documento.
@@ -120,13 +120,13 @@ Frontend->>User: Link para Documento na Blockchain
 
 ## ⏰ Semana 4
 
-**Aula**
+**✍️ Aula**
 
 - Conceitos da Lightning Network: canais de pagamento, BREEZ
 - Configuração de um nó Lightning local.
 - Interação com APIs Lightning (LND REST/gRPC).
 
-**Desafio**
+**🤺 Desafio**
 
 - Criar um chat de texto que:
   - Usuário envia mensagens para outros usuários.
@@ -139,12 +139,12 @@ Frontend->>User: Link para Documento na Blockchain
 
 ## ⏰ Semana 5
 
-**Aula**
+**✍️ Aula**
 
 - Fundamentos do Taproot
 - Criando e assinando transações Taproot.
 
-**Desafio**
+**🤺 Desafio**
 
 - Airdrop de NFTs:
   - Criar NFTs e subir para IPFS (image + json metadata)
