@@ -8,6 +8,7 @@ from decouple import config
 from bitcoinrpc.authproxy import (
     AuthServiceProxy,
 )  # Replace bitcoinlib with python-bitcoinrpc
+from urllib.parse import quote
 
 from restrictions import ALLOWED_IPS
 
@@ -27,7 +28,10 @@ limiter = Limiter(
 )
 
 # Initialize RPC connection
-rpc_connection = AuthServiceProxy(f"http://{RPC_USER}:{RPC_PASS}@127.0.0.1:18443")
+encoded_rpc_pass = quote(RPC_PASS)
+rpc_connection = AuthServiceProxy(
+    f"http://{RPC_USER}:{encoded_rpc_pass}@127.0.0.1:18443/"
+)
 
 
 def get_scriptPubKey_from_validateaddress(response_str):
