@@ -9,4 +9,5 @@ dependencies = [
     "flask>=3.1.0",
     "python-decouple>=3.8",
     "bitcoinlib>=0.7.1",
+    "cryptography>=44.0.0",
 ]

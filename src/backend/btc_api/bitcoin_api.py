@@ -12,8 +12,7 @@ import traceback
 
 from restrictions import ALLOWED_IPS
 from wallet_functions import (
-    create_wallet,
-    load_wallet_route,
+    create_or_open_wallet,
     generate_address,
     list_addresses,
     get_balance,
@@ -33,10 +32,10 @@ logging.basicConfig(
     level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
-
+network = "regtest"
 # Use regtest network
 # service = Service(network="regtest")
-service = Service(network="regtest", providers="bitcoind")
+service = Service(network=network, providers="bitcoind")
 logging.debug("Service initialized successfully.")
 print("Blockcount:", service.blockcount())
 
@@ -103,9 +102,9 @@ def requires_auth(f):
             if token != API_KEY:
                 return authenticate()
 
-        # Check IP address
-        if not is_allowed_ip(request.remote_addr):
-            return jsonify({"message": "Forbidden"}), 403
+            # Check IP address
+            if not is_allowed_ip(request.remote_addr):
+                return jsonify({"message": "Forbidden"}), 403
 
         return f(*args, **kwargs)
 
@@ -306,7 +305,7 @@ def send_transaction():
         return jsonify({"error": str(e)}), 500
 
 
-# Create a new wallet with BIP39 mnemonic
+# Create or open a wallet with BIP39 mnemonic
 @app.route("/create_wallet", methods=["POST"])
 def create_wallet_route():
     data = request.get_json()
@@ -317,7 +316,7 @@ def create_wallet_route():
         return jsonify({"error": "Wallet name and password are required"}), 400
 
     try:
-        result = create_wallet(wallet_name, password)
+        result = create_or_open_wallet(wallet_name, password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -343,28 +342,49 @@ def load_wallet_route_flask():
 # Generate a new address for the wallet
 @app.route("/generate_address", methods=["POST"])
 def generate_address_route():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
     try:
-        result = generate_address()
+        result = generate_address(wallet_name, password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # List all addresses in the wallet
-@app.route("/list_addresses", methods=["GET"])
+@app.route("/list_addresses", methods=["POST"])
 def list_addresses_route():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
     try:
-        result = list_addresses()
+        result = list_addresses(wallet_name, password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # Get wallet balance
-@app.route("/get_balance", methods=["GET"])
+@app.route("/get_balance", methods=["POST"])
 def get_balance_route():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
     try:
-        result = get_balance()
+        result = get_balance(wallet_name, password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -374,24 +394,40 @@ def get_balance_route():
 @app.route("/send_transaction", methods=["POST"])
 def send_transaction_route():
     data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
     to_address = data.get("to_address")
     amount = data.get("amount")
 
-    if not to_address or not amount:
-        return jsonify({"error": "Recipient address and amount are required"}), 400
+    if not wallet_name or not password or not to_address or not amount:
+        return (
+            jsonify(
+                {
+                    "error": "Wallet name, password, recipient address, and amount are required"
+                }
+            ),
+            400,
+        )
 
     try:
-        result = send_transaction(to_address, amount)
+        result = send_transaction(wallet_name, password, to_address, amount)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # Get transaction history for the wallet
-@app.route("/get_transaction_history", methods=["GET"])
+@app.route("/get_transaction_history", methods=["POST"])
 def get_transaction_history_route():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
     try:
-        result = get_transaction_history()
+        result = get_transaction_history(wallet_name, password)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -399,11 +435,11 @@ def get_transaction_history_route():
 
 if __name__ == "__main__":
     # context=('/home/robdc/apps/keys/server.crt', '/home/robdc/apps/keys/server.key'))
-    # context = (
-    #     "/home/robdc/apps/keys/fullchain.pem",
-    #     "/home/robdc/apps/keys/privkey.pem",
-    # )
-    # app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
+    context = (
+        "/home/robdc/apps/keys/fullchain.pem",
+        "/home/robdc/apps/keys/privkey.pem",
+    )
+    app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
 
     app.run(debug=DEBUG_MODE)
     #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)
