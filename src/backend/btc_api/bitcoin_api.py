@@ -5,12 +5,21 @@ import subprocess
 import ipaddress
 import json
 from decouple import config
-from bitcoinrpc.authproxy import (
-    AuthServiceProxy,
-)  # Replace bitcoinlib with python-bitcoinrpc
-from urllib.parse import quote
+from bitcoinlib.wallets import Wallet, wallet_delete_if_exists
+from bitcoinlib.services.services import Service
+import logging
+import traceback
 
 from restrictions import ALLOWED_IPS
+from wallet_functions import (
+    create_wallet,
+    load_wallet_route,
+    generate_address,
+    list_addresses,
+    get_balance,
+    send_transaction,
+    get_transaction_history,
+)
 
 app = Flask(__name__)
 
@@ -19,18 +28,24 @@ RPC_USER = config("RPC_USER", default="bitcoinlib")  # RPC username
 RPC_PASS = config("RPC_PASS")  # RPC password
 DEBUG_MODE = config("DEBUG_MODE", default=False, cast=bool)
 
+# Configure logging to capture more details
+logging.basicConfig(
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+
+
+# Use regtest network
+# service = Service(network="regtest")
+service = Service(network="regtest", providers="bitcoind")
+logging.debug("Service initialized successfully.")
+print("Blockcount:", service.blockcount())
+
 # Configure rate limiting
 limiter = Limiter(
     get_remote_address,
     app=app,
     default_limits=["5 per minute"],  # default_limits=["200 per day", "50 per hour"],
     storage_uri="memory://",
-)
-
-# Initialize RPC connection
-encoded_rpc_pass = quote(RPC_PASS)
-rpc_connection = AuthServiceProxy(
-    f"http://{RPC_USER}:{encoded_rpc_pass}@127.0.0.1:18443/"
 )
 
 
@@ -102,11 +117,16 @@ def requires_auth(f):
 @app.route("/getblockchaininfo", methods=["GET"])
 @requires_auth
 def get_blockchain_info():
+    result = subprocess.run(
+        ["bitcoin-cli", "-regtest", "getblockchaininfo"],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
     try:
-        blockchain_info = rpc_connection.getblockchaininfo()
-        return jsonify(blockchain_info)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse blockchain info"}), 500
 
 
 @app.route("/getbalance", methods=["GET"])
@@ -116,19 +136,31 @@ def get_balance():
     if not address:
         return jsonify({"error": "Address parameter is required"}), 400
 
-    try:
-        # Validate address
-        validate_address = rpc_connection.validateaddress(address)
-        if not validate_address.get("isvalid"):
-            return jsonify({"error": "Invalid address"}), 400
+    result1 = subprocess.run(
+        ["bitcoin-cli", "-regtest", "validateaddress", address],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
 
-        # Get balance
-        balance = rpc_connection.getreceivedbyaddress(
-            address, 0
-        )  # 0 for minimum confirmations
-        return jsonify({"balance": balance})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    (isvalid, scriptPubKey) = get_scriptPubKey_from_validateaddress(result1.stdout)
+
+    if isvalid is None:
+        return jsonify({"error": "Internal server error"}), 500
+    elif isvalid is False:
+        return jsonify({"error": "Invalid address"}), 400
+    else:
+        data = '[{"desc": "raw(' + scriptPubKey + ')"}]'
+        result2 = subprocess.run(
+            ["bitcoin-cli", "-regtest", "scantxoutset", "start", data],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            balance_data = json.loads(result2.stdout)
+            balance = balance_data.get("total_amount", "0")
+            return jsonify({"balance": balance})
+        except json.JSONDecodeError:
+            return jsonify({"error": "Failed to parse balance data"}), 500
 
 
 @app.route("/getblockhash", methods=["GET"])
@@ -138,11 +170,12 @@ def get_blockhash():
     if not block_height:
         return jsonify({"error": "Height parameter is required"}), 400
 
-    try:
-        block_hash = rpc_connection.getblockhash(int(block_height))
-        return jsonify({"blockhash": block_hash})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    result = subprocess.run(
+        ["bitcoin-cli", "-regtest", "getblockhash", block_height],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return jsonify({"blockhash": result.stdout.strip()})
 
 
 @app.route("/getblock", methods=["GET"])
@@ -152,11 +185,16 @@ def get_block():
     if not block_hash:
         return jsonify({"error": "Hash parameter is required"}), 400
 
+    result = subprocess.run(
+        ["bitcoin-cli", "-regtest", "getblock", block_hash],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
     try:
-        block_info = rpc_connection.getblock(block_hash)
-        return jsonify(block_info)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        data = json.loads(result.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse block data"}), 500
 
 
 @app.route("/gettransaction", methods=["GET"])
@@ -166,13 +204,25 @@ def get_transaction():
     if not txid:
         return jsonify({"error": "Transaction ID parameter is required"}), 400
 
+    result1 = subprocess.run(
+        ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+
+    if result1.stdout == "":
+        return jsonify({"error": "Invalid transaction ID"}), 400
+
+    result2 = subprocess.run(
+        ["bitcoin-cli", "-regtest", "decoderawtransaction", result1.stdout.strip("\n")],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
     try:
-        transaction_info = rpc_connection.getrawtransaction(
-            txid, 1
-        )  # 1 for verbose output
-        return jsonify(transaction_info)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        data = json.loads(result2.stdout)
+        return jsonify(data)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse transaction data"}), 500
 
 
 @app.route("/getrawtransaction", methods=["GET"])
@@ -182,11 +232,12 @@ def get_raw_transaction():
     if not txid:
         return jsonify({"error": "Transaction ID parameter is required"}), 400
 
-    try:
-        raw_transaction = rpc_connection.getrawtransaction(txid)
-        return jsonify({"raw_transaction": raw_transaction})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    result1 = subprocess.run(
+        ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
+        stdout=subprocess.PIPE,
+        text=True,
+    )
+    return jsonify({"raw_transaction": result1.stdout.strip()})
 
 
 @app.route("/generate_addresses", methods=["POST"])
@@ -195,10 +246,17 @@ def generate_addresses():
     try:
         data = request.get_json()
         count = data.get("count", 1)
+        wallet_name = data.get("wallet_name", "my_wallet")
+
+        # Delete wallet if it already exists
+        wallet_delete_if_exists(wallet_name)
+
+        # Create a new wallet
+        wallet = Wallet.create(wallet_name)
 
         addresses = []
         for _ in range(count):
-            address = rpc_connection.getnewaddress()
+            address = wallet.get_key().address
             addresses.append(address)
 
         return jsonify({"addresses": addresses})
@@ -214,11 +272,13 @@ def check_balance():
         if not address:
             return jsonify({"error": "Address parameter is required"}), 400
 
-        balance = rpc_connection.getreceivedbyaddress(
-            address, 0
-        )  # 0 for minimum confirmations
+        # service = Service()
+        balance = service.getbalance(address)
+
         return jsonify({"balance": balance})
     except Exception as e:
+        logging.debug(traceback.format_exc())
+
         return jsonify({"error": str(e)}), 500
 
 
@@ -237,9 +297,102 @@ def send_transaction():
                 400,
             )
 
-        # Send transaction
-        txid = rpc_connection.sendtoaddress(to_address, amount)
+        # service = Service()
+        txid = service.send(from_address, to_address, amount)
+
         return jsonify({"txid": txid})
+    except Exception as e:
+        logging.debug(traceback.format_exc())
+        return jsonify({"error": str(e)}), 500
+
+
+# Create a new wallet with BIP39 mnemonic
+@app.route("/create_wallet", methods=["POST"])
+def create_wallet_route():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
+    try:
+        result = create_wallet(wallet_name, password)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Load a wallet from an HDKey
+@app.route("/load_wallet", methods=["POST"])
+def load_wallet_route_flask():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    password = data.get("password")
+
+    if not wallet_name or not password:
+        return jsonify({"error": "Wallet name and password are required"}), 400
+
+    try:
+        result = load_wallet_route(wallet_name, password)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Generate a new address for the wallet
+@app.route("/generate_address", methods=["POST"])
+def generate_address_route():
+    try:
+        result = generate_address()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# List all addresses in the wallet
+@app.route("/list_addresses", methods=["GET"])
+def list_addresses_route():
+    try:
+        result = list_addresses()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Get wallet balance
+@app.route("/get_balance", methods=["GET"])
+def get_balance_route():
+    try:
+        result = get_balance()
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Send a transaction
+@app.route("/send_transaction", methods=["POST"])
+def send_transaction_route():
+    data = request.get_json()
+    to_address = data.get("to_address")
+    amount = data.get("amount")
+
+    if not to_address or not amount:
+        return jsonify({"error": "Recipient address and amount are required"}), 400
+
+    try:
+        result = send_transaction(to_address, amount)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Get transaction history for the wallet
+@app.route("/get_transaction_history", methods=["GET"])
+def get_transaction_history_route():
+    try:
+        result = get_transaction_history()
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
