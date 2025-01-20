@@ -15,9 +15,10 @@ from wallet_functions import (
     create_or_open_wallet,
     generate_address,
     list_addresses,
-    get_balance,
+    get_wallet_balance,
     send_transaction,
     get_transaction_history,
+    load_wallet,
 )
 
 app = Flask(__name__)
@@ -281,30 +282,6 @@ def check_balance():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/send_transaction", methods=["POST"])
-@requires_auth
-def send_transaction():
-    try:
-        data = request.get_json()
-        from_address = data.get("from_address")
-        to_address = data.get("to_address")
-        amount = data.get("amount")
-
-        if not from_address or not to_address or not amount:
-            return (
-                jsonify({"error": "from_address, to_address, and amount are required"}),
-                400,
-            )
-
-        # service = Service()
-        txid = service.send(from_address, to_address, amount)
-
-        return jsonify({"txid": txid})
-    except Exception as e:
-        logging.debug(traceback.format_exc())
-        return jsonify({"error": str(e)}), 500
-
-
 # Create or open a wallet with BIP39 mnemonic
 @app.route("/create_wallet", methods=["POST"])
 def create_wallet_route():
@@ -324,17 +301,28 @@ def create_wallet_route():
 
 # Load a wallet from an HDKey
 @app.route("/load_wallet", methods=["POST"])
-def load_wallet_route_flask():
+def load_wallet_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
 
-    if not wallet_name or not password:
-        return jsonify({"error": "Wallet name and password are required"}), 400
+    if not wallet_name or not password or not salt:
+        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
 
     try:
-        result = load_wallet_route(wallet_name, password)
-        return jsonify(result)
+        result = load_wallet(wallet_name, password, salt)
+
+        if result is None:
+            return jsonify({"error": "Wallet could not be loaded"})
+        else:
+            return jsonify(
+                {
+                    "message": "Wallet loaded successfully",
+                    "wallet_name": result.name,
+                    "addresses": result.addresslist(),
+                }
+            )
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -345,12 +333,13 @@ def generate_address_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
 
-    if not wallet_name or not password:
-        return jsonify({"error": "Wallet name and password are required"}), 400
+    if not wallet_name or not password or not salt:
+        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
 
     try:
-        result = generate_address(wallet_name, password)
+        result = generate_address(wallet_name, password, salt)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -362,29 +351,31 @@ def list_addresses_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
 
-    if not wallet_name or not password:
-        return jsonify({"error": "Wallet name and password are required"}), 400
+    if not wallet_name or not password or not salt:
+        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
 
     try:
-        result = list_addresses(wallet_name, password)
+        result = list_addresses(wallet_name, password, salt)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 
 # Get wallet balance
-@app.route("/get_balance", methods=["POST"])
-def get_balance_route():
+@app.route("/get_wallet_balance", methods=["POST"])
+def get_wallet_balance_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
 
-    if not wallet_name or not password:
-        return jsonify({"error": "Wallet name and password are required"}), 400
+    if not wallet_name or not password or not salt:
+        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
 
     try:
-        result = get_balance(wallet_name, password)
+        result = get_wallet_balance(wallet_name, password, salt)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -396,21 +387,22 @@ def send_transaction_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
     to_address = data.get("to_address")
     amount = data.get("amount")
 
-    if not wallet_name or not password or not to_address or not amount:
+    if not wallet_name or not password or not salt or not to_address or not amount:
         return (
             jsonify(
                 {
-                    "error": "Wallet name, password, recipient address, and amount are required"
+                    "error": "Wallet name, password, salt, recipient address, and amount are required"
                 }
             ),
             400,
         )
 
     try:
-        result = send_transaction(wallet_name, password, to_address, amount)
+        result = send_transaction(wallet_name, password, salt, to_address, amount)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -422,12 +414,13 @@ def get_transaction_history_route():
     data = request.get_json()
     wallet_name = data.get("wallet_name")
     password = data.get("password")
+    salt = data.get("salt")
 
-    if not wallet_name or not password:
-        return jsonify({"error": "Wallet name and password are required"}), 400
+    if not wallet_name or not password or not salt:
+        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
 
     try:
-        result = get_transaction_history(wallet_name, password)
+        result = get_transaction_history(wallet_name, password, salt)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -441,5 +434,5 @@ if __name__ == "__main__":
     )
     app.run(host="0.0.0.0", port=5000, debug=DEBUG_MODE, ssl_context=context)
 
-    app.run(debug=DEBUG_MODE)
+    # app.run(debug=DEBUG_MODE)
     #  app.run(host= '0.0.0.0', port=5000, debug=DEBUG_MODE)

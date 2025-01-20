@@ -85,13 +85,50 @@ def save_wallet(wallet, password):
     return salt  # Return the salt for storage
 
 
-# Helper function to load wallet from encrypted JSON
-def load_wallet(wallet_name, password, salt):
-    with open(f"{wallet_name}_encrypted.json", "rb") as f:
-        encrypted_data = f.read()
-    decrypted_data = decrypt_data(encrypted_data, password, salt)
-    wallet_data = json.loads(decrypted_data)
-    return Wallet(wallet_data["name"], keys=wallet_data["keys"])
+def load_wallet(wallet_name, password, salt_hex):
+    """
+    Load a wallet from an encrypted JSON file using the provided password and salt.
+    """
+    try:
+        # Convert hex-encoded salt to bytes
+        salt = bytes.fromhex(salt_hex)
+
+        # Load the encrypted wallet data
+        with open(f"{wallet_name}_encrypted.json", "rb") as f:
+            encrypted_data = f.read()
+
+        # Decrypt the wallet data
+        decrypted_data = decrypt_data(encrypted_data, password, salt)
+        wallet_data = json.loads(decrypted_data)
+
+        # Extract wallet name and keys from the JSON data
+        wallet_name = wallet_data["name"]
+        keys_data = wallet_data["keys"]
+        transactions = wallet_data["transactions"]
+
+        hdkey = []
+
+        # Reconstruct and add keys to the wallet
+        for key_data in keys_data:
+            key_id = key_data["id"]
+            key_name = key_data["name"]
+            key_wif = key_data["wif"]
+
+            # Reconstruct the HDKey from the WIF
+            hdkey.append(HDKey(key_wif))
+
+        # Create or open the wallet
+        wallet = wallet_create_or_open(
+            name=wallet_name,
+            keys=hdkey,
+            network="testnet",
+            password=password,
+        )
+
+        return wallet
+    except Exception as e:
+        print(str(e))
+        return None
 
 
 # Create or open a wallet with BIP39 mnemonic
@@ -140,7 +177,7 @@ def list_addresses(wallet_name, password, salt):
 
 
 # Get wallet balance
-def get_balance(wallet_name, password, salt):
+def get_wallet_balance(wallet_name, password, salt):
     wallet = load_wallet(wallet_name, password, salt)
     balance = wallet.balance()
     return {
