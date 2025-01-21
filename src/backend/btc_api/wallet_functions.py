@@ -5,7 +5,6 @@ from bitcoinlib.wallets import (
     wallet_create_or_open,
 )
 from bitcoinlib.mnemonic import Mnemonic
-from bitcoinlib.services import BitcoindClient
 from cryptography.fernet import Fernet
 import json
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -13,6 +12,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import base64
 import os
+import subprocess
 
 
 # Helper function to generate a key for encryption
@@ -230,17 +230,24 @@ def get_transaction_history(wallet_name, password, salt):
     }
 
 
-# Get transaction history for the wallet
+# Mint a block for the wallet
 def mine(wallet_name, password, salt):
     try:
         wallet = load_wallet(wallet_name, password, salt)
-        client = BitcoindClient()
+        # client = BitcoindClient()
 
-        client.mine_blocks(wallet_address=wallet.addresses[0])
+        wallet_address = wallet.get_key().address
 
-        return {
-            "message": "Block mined successfully",
-            "address": wallet.addresses[0],
-        }
+        result = subprocess.run(
+            ["bitcoin-cli", "-regtest", "generatetoaddress", "1", wallet_address],
+            stdout=subprocess.PIPE,
+            text=True,
+        )
+        try:
+            data = json.loads(result.stdout)
+            return {"message": "Block mined successfully", "return": data}
+        except Exception as e:
+            return {"error": str(e)}
+
     except Exception as e:
         raise Exception(str(e))
