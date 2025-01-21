@@ -5,6 +5,7 @@ from bitcoinlib.wallets import (
     wallet_create_or_open,
 )
 from bitcoinlib.mnemonic import Mnemonic
+from bitcoinlib.services import BitcoindClient
 from cryptography.fernet import Fernet
 import json
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -70,13 +71,17 @@ def serialize_keys(db_keys):
 
 
 # Helper function to save wallet as encrypted JSON
-def save_wallet(wallet, password):
+def save_wallet(wallet, password, salt=None):
     wallet_data = {
         "name": wallet.name,
         "keys": serialize_keys(wallet.keys()),
         "transactions": wallet.transactions(),
     }
-    salt = os.urandom(16)
+    if not salt:
+        salt = os.urandom(16)
+    else:
+        salt = bytes.fromhex(salt)
+
     encrypted_data = encrypt_data(json.dumps(wallet_data), password, salt)
 
     with open(f"{wallet.name}_encrypted.json", "wb") as f:
@@ -121,7 +126,7 @@ def load_wallet(wallet_name, password, salt_hex):
         wallet = wallet_create_or_open(
             name=wallet_name,
             keys=hdkey,
-            network="testnet",
+            network="regtest",
             password=password,
         )
 
@@ -141,7 +146,7 @@ def create_or_open_wallet(wallet_name, password):
     wallet = wallet_create_or_open(
         name=wallet_name,
         keys=hdkey,
-        network="testnet",
+        network="regtest",
         password=password,
     )
 
@@ -157,12 +162,21 @@ def create_or_open_wallet(wallet_name, password):
 
 
 # Generate a new address for the wallet
-def generate_address(wallet_name, password, salt):
+def generate_address(wallet_name, password, salt, num_addresses):
     wallet = load_wallet(wallet_name, password, salt)
-    address = wallet.get_key().address
+
+    # Generate multiple addresses
+    addresses = []
+    for _ in range(num_addresses):
+        key = wallet.new_key()
+        addresses.append(key.address)
+
+    # Save the wallet with a password and set the salt
+    salt = save_wallet(wallet, password, salt)
+
     return {
-        "message": "New address generated",
-        "address": address,
+        "message": "New addresses generated",
+        "addresses": addresses,
     }
 
 
@@ -194,6 +208,10 @@ def send_transaction(wallet_name, password, salt, to_address, amount):
 
     try:
         tx = wallet.send_to(to_address, amount)
+
+        # Save the wallet with a password and set the salt
+        salt = save_wallet(wallet, password, salt)
+
         return {
             "message": "Transaction sent successfully",
             "transaction_id": tx.txid,
@@ -210,3 +228,19 @@ def get_transaction_history(wallet_name, password, salt):
         "message": "Transaction history retrieved successfully",
         "transactions": transactions,
     }
+
+
+# Get transaction history for the wallet
+def mine(wallet_name, password, salt):
+    try:
+        wallet = load_wallet(wallet_name, password, salt)
+        client = BitcoindClient()
+
+        client.mine_blocks(wallet_address=wallet.addresses[0])
+
+        return {
+            "message": "Block mined successfully",
+            "address": wallet.addresses[0],
+        }
+    except Exception as e:
+        raise Exception(str(e))

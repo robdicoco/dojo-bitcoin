@@ -19,6 +19,7 @@ from wallet_functions import (
     send_transaction,
     get_transaction_history,
     load_wallet,
+    mine,
 )
 
 app = Flask(__name__)
@@ -240,26 +241,23 @@ def get_raw_transaction():
     return jsonify({"raw_transaction": result1.stdout.strip()})
 
 
-@app.route("/generate_addresses", methods=["POST"])
+@app.route("/mint", methods=["GET"])
 @requires_auth
-def generate_addresses():
+def block_gen():
     try:
         data = request.get_json()
-        count = data.get("count", 1)
-        wallet_name = data.get("wallet_name", "my_wallet")
+        wallet_name = data.get("wallet_name")
+        password = data.get("password")
+        salt = data.get("salt")
 
-        # Delete wallet if it already exists
-        wallet_delete_if_exists(wallet_name)
+        if not wallet_name or not password or not salt:
+            return (
+                jsonify({"error": "Wallet name, password, and salt are required"}),
+                400,
+            )
 
-        # Create a new wallet
-        wallet = Wallet.create(wallet_name)
-
-        addresses = []
-        for _ in range(count):
-            address = wallet.get_key().address
-            addresses.append(address)
-
-        return jsonify({"addresses": addresses})
+        result = mine(wallet_name, password)
+        return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -334,12 +332,26 @@ def generate_address_route():
     wallet_name = data.get("wallet_name")
     password = data.get("password")
     salt = data.get("salt")
+    num_addresses = data.get("num_addresses")
 
-    if not wallet_name or not password or not salt:
-        return jsonify({"error": "Wallet name, password, and salt are required"}), 400
+    if not wallet_name or not password or not salt or not num_addresses:
+        return (
+            jsonify(
+                {
+                    "error": "Wallet name, password, and salt  and num_addresses are required"
+                }
+            ),
+            400,
+        )
+
+    if int(num_addresses) < 0:
+        return jsonify({"error": "num_addresses must be 1 or higher"}), 400
+
+    if int(num_addresses) > 30:
+        return jsonify({"error": "num_addresses must be lower than 31"}), 400
 
     try:
-        result = generate_address(wallet_name, password, salt)
+        result = generate_address(wallet_name, password, salt, num_addresses)
         return jsonify(result)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
