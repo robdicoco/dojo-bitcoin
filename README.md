@@ -90,12 +90,14 @@ participant "Bitcoin (Testnet)" as Blockchain
 participant "User" as User
 participant "Frontend" as Frontend
 
+entryspacing 1.0
 User->>Frontend: Upload do Documento
 Frontend->>Frontend: Geração do Hash (SHA-256)
 
 # PARALLEL
 Frontend->>Backend: Novo docs adicionado na Plataforma [enviar hash e docs]
 Backend->>Backend: Cria nova carteira para receber pagamento
+Backend->>Frontend: nova carteira aqui: Addr
 Backend->Backend: Aguarda Confirmação de Pagamento
 Frontend->>User: Exibe Status do docs [Pagamento Pendente]
 # PARALLEL
