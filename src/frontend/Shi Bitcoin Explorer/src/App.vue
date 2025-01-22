@@ -34,7 +34,7 @@
         <Wallets
           :wallets="wallets"
           @create-wallet="createWallet"
-          @generate-address="generateAddress"
+          @generate-addresses="generateAddresses"
         />
       </div>
     </div>
@@ -84,7 +84,11 @@ export default {
       isDarkMode: false, // Dark mode state
       theme: 'light', // Current theme
       wallets: [], // List of wallets
-      latestOperations: [], // List of latest operations
+      latestOperations: {
+        latestBlock: null,
+        latestBlocks: [],
+        latestTransactions: [],
+      }, // Latest operations data
     }
   },
   methods: {
@@ -114,34 +118,20 @@ export default {
         this.wallets = [] // Fallback to an empty array
       }
     },
-    async createWallet(walletName) {
-      try {
-        const response = await axios.post('/api/create_wallet', { wallet_name: walletName })
-        this.fetchWallets() // Refresh the wallet list
-        return response.data
-      } catch (error) {
-        console.error('Error creating wallet:', error)
-        throw error
-      }
-    },
-    async generateAddresses({ walletName, count }) {
-      try {
-        const response = await axios.post('/api/generate_multi_address', {
-          wallet_name: walletName,
-          num_addresses: count,
-        })
-        return response.data
-      } catch (error) {
-        console.error('Error generating addresses:', error)
-        throw error
-      }
-    },
     async fetchLatestOperations() {
       try {
-        const response = await axios.get('api/get_latest_activity')
+        const response = await axios.get('/api/get_latest_activity')
         const data = response.data
 
-        // Extract relevant data for display
+        // Log the response for debugging
+        console.log('Latest Activity Response:', data)
+
+        // Validate the response
+        if (!data || !data.latest_block || !data.latest_blocks || !data.latest_transactions) {
+          throw new Error('Invalid response from the server')
+        }
+
+        // Assign data to latestOperations
         this.latestOperations = {
           latestBlock: data.latest_block,
           latestBlocks: data.latest_blocks,
@@ -156,7 +146,6 @@ export default {
         }
       }
     },
-    // Create a new wallet
     async createWallet(walletName) {
       try {
         const response = await axios.post('/api/create_wallet', { wallet_name: walletName })
@@ -167,7 +156,6 @@ export default {
         throw error
       }
     },
-    // Generate multiple addresses
     async generateAddresses({ walletName, count }) {
       try {
         const response = await axios.post('/api/generate_multi_address', {
@@ -180,8 +168,6 @@ export default {
         throw error
       }
     },
-
-    // Mint a block
     async mintBlock(walletName) {
       try {
         const response = await axios.post('/api/mine', { wallet_name: walletName, num_blocks: 1 })
@@ -191,7 +177,6 @@ export default {
         throw error
       }
     },
-    // Transfer funds
     async transferFunds({ walletName, toAddress, amount }) {
       try {
         const response = await axios.post('/api/send_transaction', {

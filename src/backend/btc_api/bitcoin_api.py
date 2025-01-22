@@ -9,12 +9,14 @@ import logging
 import traceback
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
 from urllib.parse import quote
+from flask_cors import CORS
 
 from restrictions import ALLOWED_IPS
 
 
 # Configuration
 app = Flask(__name__)
+CORS(app)
 API_KEY = config("TEST_API_KEY")
 RPC_USER = config("RPC_USER", default="bitcoin")  # RPC username
 RPC_PASS = config("RPC_PASS")  # RPC password

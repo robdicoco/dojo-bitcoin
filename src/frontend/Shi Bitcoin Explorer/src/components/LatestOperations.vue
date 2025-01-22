@@ -3,21 +3,21 @@
     <h2>Latest Activity</h2>
 
     <!-- Display Latest Block -->
-    <div v-if="latestOperations.latestBlock" class="latest-block">
+    <div v-if="operations.latestBlock" class="latest-block">
       <h3>Latest Block</h3>
       <div class="block-info">
-        <p><strong>Height:</strong> {{ latestOperations.latestBlock.height }}</p>
-        <p><strong>Hash:</strong> {{ latestOperations.latestBlock.hash }}</p>
-        <p><strong>Time:</strong> {{ formatTimestamp(latestOperations.latestBlock.time) }}</p>
-        <p><strong>Transactions:</strong> {{ latestOperations.latestBlock.nTx }}</p>
+        <p><strong>Height:</strong> {{ operations.latestBlock.height }}</p>
+        <p><strong>Hash:</strong> {{ operations.latestBlock.hash }}</p>
+        <p><strong>Time:</strong> {{ formatTimestamp(operations.latestBlock.time) }}</p>
+        <p><strong>Transactions:</strong> {{ operations.latestBlock.nTx }}</p>
       </div>
     </div>
 
     <!-- Display Latest Blocks -->
-    <div v-if="latestOperations.latestBlocks.length > 0" class="latest-blocks">
+    <div v-if="operations.latestBlocks && operations.latestBlocks.length > 0" class="latest-blocks">
       <h3>Latest Blocks</h3>
       <ul>
-        <li v-for="block in latestOperations.latestBlocks" :key="block.hash" class="block-item">
+        <li v-for="block in operations.latestBlocks" :key="block.hash" class="block-item">
           <p><strong>Height:</strong> {{ block.height }}</p>
           <p><strong>Hash:</strong> {{ block.hash }}</p>
           <p><strong>Time:</strong> {{ formatTimestamp(block.time) }}</p>
@@ -27,14 +27,13 @@
     </div>
 
     <!-- Display Latest Transactions -->
-    <div v-if="latestOperations.latestTransactions.length > 0" class="latest-transactions">
+    <div
+      v-if="operations.latestTransactions && operations.latestTransactions.length > 0"
+      class="latest-transactions"
+    >
       <h3>Latest Transactions</h3>
       <ul>
-        <li
-          v-for="tx in latestOperations.latestTransactions"
-          :key="tx.txid"
-          class="transaction-item"
-        >
+        <li v-for="tx in operations.latestTransactions" :key="tx.txid" class="transaction-item">
           <p><strong>TXID:</strong> {{ tx.txid }}</p>
           <p><strong>Time:</strong> {{ formatTimestamp(tx.time) }}</p>
           <p><strong>Category:</strong> {{ tx.category }}</p>
@@ -46,9 +45,9 @@
     <!-- Display Message if No Data -->
     <div
       v-if="
-        !latestOperations.latestBlock &&
-        latestOperations.latestBlocks.length === 0 &&
-        latestOperations.latestTransactions.length === 0
+        !operations.latestBlock &&
+        (!operations.latestBlocks || operations.latestBlocks.length === 0) &&
+        (!operations.latestTransactions || operations.latestTransactions.length === 0)
       "
     >
       No latest activity found.
@@ -59,7 +58,7 @@
 <script>
 export default {
   props: {
-    latestOperations: {
+    operations: {
       type: Object,
       required: true,
       default: () => ({

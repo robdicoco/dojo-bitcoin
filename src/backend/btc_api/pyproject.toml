@@ -10,4 +10,5 @@ dependencies = [
     "python-decouple>=3.8",
     "cryptography>=44.0.0",
     "python-bitcoinrpc>=1.0",
+    "flask-cors>=5.0.0",
 ]
