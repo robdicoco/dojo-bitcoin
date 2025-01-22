@@ -338,40 +338,6 @@ def get_blockhash():
         return jsonify({"error": str(e)}), 500
 
 
-# @app.route("/getbalance", methods=["GET"])
-# @requires_auth
-# def get_balance():
-#     address = request.args.get("address")
-#     if not address:
-#         return jsonify({"error": "Address parameter is required"}), 400
-
-#     result1 = subprocess.run(
-#         ["bitcoin-cli", "-regtest", "validateaddress", address],
-#         stdout=subprocess.PIPE,
-#         text=True,
-#     )
-
-#     (isvalid, scriptPubKey) = get_scriptPubKey_from_validateaddress(result1.stdout)
-
-#     if isvalid is None:
-#         return jsonify({"error": "Internal server error"}), 500
-#     elif isvalid is False:
-#         return jsonify({"error": "Invalid address"}), 400
-#     else:
-#         data = '[{"desc": "raw(' + scriptPubKey + ')"}]'
-#         result2 = subprocess.run(
-#             ["bitcoin-cli", "-regtest", "scantxoutset", "start", data],
-#             stdout=subprocess.PIPE,
-#             text=True,
-#         )
-#         try:
-#             balance_data = json.loads(result2.stdout)
-#             balance = balance_data.get("total_amount", "0")
-#             return jsonify({"balance": balance})
-#         except json.JSONDecodeError:
-#             return jsonify({"error": "Failed to parse balance data"}), 500
-
-
 @app.route("/getblock", methods=["GET"])
 @requires_auth
 def get_block():
@@ -494,6 +460,89 @@ def list_addresses():
                 "addresses": list(addresses.keys()),
             }
         )
+    except JSONRPCException as e:
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/get_latest_activity", methods=["GET"])
+@requires_auth
+def get_latest_activity():
+    try:
+        rpc = get_rpc_connection()  # Use default RPC connection for blockchain data
+
+        # Get the latest block details
+        latest_block_hash = rpc.getbestblockhash()
+        latest_block = rpc.getblock(latest_block_hash)
+
+        # Get the latest 5 blocks
+        latest_blocks = []
+        current_height = latest_block["height"]
+        for i in range(5):
+            block_hash = rpc.getblockhash(current_height - i)
+            block = rpc.getblock(block_hash)
+            latest_blocks.append(
+                {
+                    "height": block["height"],
+                    "hash": block["hash"],
+                    "time": block["time"],
+                    "num_transactions": len(block["tx"]),
+                }
+            )
+
+        # Get the latest 5 transactions from the mempool (unconfirmed transactions)
+        mempool_txids = rpc.getrawmempool()[
+            :5
+        ]  # Get the first 5 unconfirmed transactions
+        mempool_transactions = []
+        for txid in mempool_txids:
+            raw_tx = rpc.getrawtransaction(txid)
+            decoded_tx = rpc.decoderawtransaction(raw_tx)
+            mempool_transactions.append(
+                {
+                    "txid": txid,
+                    "category": "unconfirmed",
+                    "time": int(
+                        time.time()
+                    ),  # Use current time for unconfirmed transactions
+                    "details": decoded_tx,
+                }
+            )
+
+        # Get the latest 5 transactions from the latest block (confirmed transactions)
+        latest_block_txids = latest_block["tx"][
+            -5:
+        ]  # Get the last 5 transactions in the latest block
+        latest_block_transactions = []
+        for txid in latest_block_txids:
+            raw_tx = rpc.getrawtransaction(txid)
+            decoded_tx = rpc.decoderawtransaction(raw_tx)
+            latest_block_transactions.append(
+                {
+                    "txid": txid,
+                    "category": "confirmed",
+                    "time": latest_block["time"],
+                    "details": decoded_tx,
+                }
+            )
+
+        # Combine mempool and latest block transactions
+        latest_transactions = mempool_transactions + latest_block_transactions
+
+        return jsonify(
+            {
+                "latest_block": latest_block,
+                "latest_blocks": latest_blocks,
+                "latest_transactions": latest_transactions,
+            }
+        )
+
     except JSONRPCException as e:
         logging.error(f"RPC Error: {str(e)}")
         return jsonify({"error": f"RPC Error: {str(e)}"}), 500

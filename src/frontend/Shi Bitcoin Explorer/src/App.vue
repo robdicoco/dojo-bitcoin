@@ -16,9 +16,27 @@
       <SearchBar @data-fetched="handleDataFetched" />
     </div>
 
-    <!-- Results (Below Search Bar) -->
-    <div class="results-wrapper">
-      <Results :searchResults="searchResults" :isLoading="isLoading" :error="error" />
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Latest Operations (Left Side) -->
+      <div class="latest-operations">
+        <h2>Latest Operations</h2>
+        <LatestOperations :operations="latestOperations" />
+      </div>
+
+      <!-- Results (Center) -->
+      <div class="results-wrapper">
+        <Results :searchResults="searchResults" :isLoading="isLoading" :error="error" />
+      </div>
+
+      <!-- Wallets (Right Side) -->
+      <div class="wallets-wrapper">
+        <Wallets
+          :wallets="wallets"
+          @create-wallet="createWallet"
+          @generate-address="generateAddress"
+        />
+      </div>
     </div>
 
     <!-- Blockchain Info (Below Results) -->
@@ -46,12 +64,17 @@
 import BlockChainData from './components/BlockChainData.vue'
 import SearchBar from './components/SearchBar.vue'
 import Results from './components/Results.vue'
+import Wallets from './components/Wallets.vue'
+import LatestOperations from './components/LatestOperations.vue'
+import axios from 'axios'
 
 export default {
   components: {
     BlockChainData,
     SearchBar,
     Results,
+    Wallets,
+    LatestOperations,
   },
   data() {
     return {
@@ -60,6 +83,8 @@ export default {
       error: '', // Error message
       isDarkMode: false, // Dark mode state
       theme: 'light', // Current theme
+      wallets: [], // List of wallets
+      latestOperations: [], // List of latest operations
     }
   },
   methods: {
@@ -80,12 +105,116 @@ export default {
       this.theme = this.isDarkMode ? 'dark' : 'light'
       document.documentElement.setAttribute('data-theme', this.theme)
     },
+    async fetchWallets() {
+      try {
+        const response = await axios.get('/api/list_wallets')
+        this.wallets = response.data.wallets || [] // Fallback to an empty array
+      } catch (error) {
+        console.error('Error fetching wallets:', error)
+        this.wallets = [] // Fallback to an empty array
+      }
+    },
+    async createWallet(walletName) {
+      try {
+        const response = await axios.post('/api/create_wallet', { wallet_name: walletName })
+        this.fetchWallets() // Refresh the wallet list
+        return response.data
+      } catch (error) {
+        console.error('Error creating wallet:', error)
+        throw error
+      }
+    },
+    async generateAddresses({ walletName, count }) {
+      try {
+        const response = await axios.post('/api/generate_multi_address', {
+          wallet_name: walletName,
+          num_addresses: count,
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error generating addresses:', error)
+        throw error
+      }
+    },
+    async fetchLatestOperations() {
+      try {
+        const response = await axios.get('api/get_latest_activity')
+        const data = response.data
+
+        // Extract relevant data for display
+        this.latestOperations = {
+          latestBlock: data.latest_block,
+          latestBlocks: data.latest_blocks,
+          latestTransactions: data.latest_transactions,
+        }
+      } catch (error) {
+        console.error('Error fetching latest activity:', error)
+        this.latestOperations = {
+          latestBlock: null,
+          latestBlocks: [],
+          latestTransactions: [],
+        }
+      }
+    },
+    // Create a new wallet
+    async createWallet(walletName) {
+      try {
+        const response = await axios.post('/api/create_wallet', { wallet_name: walletName })
+        this.fetchWallets() // Refresh the wallet list
+        return response.data
+      } catch (error) {
+        console.error('Error creating wallet:', error)
+        throw error
+      }
+    },
+    // Generate multiple addresses
+    async generateAddresses({ walletName, count }) {
+      try {
+        const response = await axios.post('/api/generate_multi_address', {
+          wallet_name: walletName,
+          num_addresses: count,
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error generating addresses:', error)
+        throw error
+      }
+    },
+
+    // Mint a block
+    async mintBlock(walletName) {
+      try {
+        const response = await axios.post('/api/mine', { wallet_name: walletName, num_blocks: 1 })
+        return response.data
+      } catch (error) {
+        console.error('Error mining block:', error)
+        throw error
+      }
+    },
+    // Transfer funds
+    async transferFunds({ walletName, toAddress, amount }) {
+      try {
+        const response = await axios.post('/api/send_transaction', {
+          wallet_name: walletName,
+          to_address: toAddress,
+          amount: amount,
+        })
+        return response.data
+      } catch (error) {
+        console.error('Error transferring funds:', error)
+        throw error
+      }
+    },
   },
   mounted() {
     // Initialize theme based on user preference or system settings
     const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
     this.isDarkMode = prefersDarkMode
     this.toggleTheme()
+
+    // Fetch initial data
+    this.fetchWallets()
+    this.fetchLatestOperations()
   },
 }
 </script>
@@ -200,10 +329,29 @@ input:checked + .slider::before {
   justify-content: center;
 }
 
-/* Results Wrapper (Below Search Bar) */
-.results-wrapper {
+/* Main Content */
+.main-content {
+  display: flex;
   width: 100%;
-  margin-top: 20px; /* Space between search bar and results */
+  margin-top: 20px;
+}
+
+/* Latest Operations (Left Side) */
+.latest-operations {
+  flex: 1;
+  margin-right: 20px;
+}
+
+/* Results Wrapper (Center) */
+.results-wrapper {
+  flex: 2;
+  margin: 0 20px;
+}
+
+/* Wallets Wrapper (Right Side) */
+.wallets-wrapper {
+  flex: 1;
+  margin-left: 20px;
 }
 
 /* GitHub Links (Bottom) */
