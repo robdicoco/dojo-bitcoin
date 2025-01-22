@@ -11,36 +11,51 @@
     <!-- Site Title (Top Left Corner) -->
     <div class="site-title">Shi(し) Satoshi Explorer</div>
 
-    <!-- Search Bar (Top Center) -->
-    <div class="search-container">
-      <SearchBar @data-fetched="handleDataFetched" />
+    <!-- Tab Navigation -->
+    <div class="tab-navigation">
+      <button :class="{ active: activeTab === 'search' }" @click="activeTab = 'search'">
+        Search
+      </button>
+      <button :class="{ active: activeTab === 'wallets' }" @click="activeTab = 'wallets'">
+        Wallets
+      </button>
+      <button
+        :class="{ active: activeTab === 'latest-operations' }"
+        @click="activeTab = 'latest-operations'"
+      >
+        Latest Operations
+      </button>
     </div>
 
     <!-- Main Content -->
     <div class="main-content">
-      <!-- Latest Operations (Left Side) -->
-      <div class="latest-operations">
-        <h2>Latest Operations</h2>
-        <LatestOperations :operations="latestOperations" />
+      <!-- Search Tab -->
+      <div v-if="activeTab === 'search'" class="tab-content">
+        <div class="search-container">
+          <SearchBar @data-fetched="handleDataFetched" />
+        </div>
+        <div class="results-wrapper">
+          <Results :searchResults="searchResults" :isLoading="isLoading" :error="error" />
+        </div>
       </div>
 
-      <!-- Results (Center) -->
-      <div class="results-wrapper">
-        <Results :searchResults="searchResults" :isLoading="isLoading" :error="error" />
-      </div>
-
-      <!-- Wallets (Right Side) -->
-      <div class="wallets-wrapper">
+      <!-- Wallets Tab -->
+      <div v-if="activeTab === 'wallets'" class="tab-content">
         <Wallets
           :wallets="wallets"
           @create-wallet="createWallet"
           @generate-addresses="generateAddresses"
         />
       </div>
+
+      <!-- Latest Operations Tab -->
+      <div v-if="activeTab === 'latest-operations'" class="tab-content">
+        <LatestOperations :operations="latestOperations" @refresh-data="fetchLatestOperations" />
+      </div>
     </div>
 
     <!-- Blockchain Info (Below Results) -->
-    <div class="blockchain-wrapper">
+    <div v-if="activeTab === 'search'" class="blockchain-wrapper">
       <BlockChainData />
     </div>
 
@@ -89,6 +104,7 @@ export default {
         latestBlocks: [],
         latestTransactions: [],
       }, // Latest operations data
+      activeTab: 'search', // Active tab (search, wallets, latest-operations)
     }
   },
   methods: {
@@ -120,7 +136,7 @@ export default {
     },
     async fetchLatestOperations() {
       try {
-        const response = await axios.get('/api/get_latest_activity')
+        const response = await axios.get('https://shisatoshi.758206.xyz:5000/get_latest_activity')
         const data = response.data
 
         // Log the response for debugging
@@ -234,7 +250,7 @@ export default {
 /* Dark Theme */
 #app.dark {
   --background-color: #1a1a1a;
-  --text-color: #f9f9f9;
+  --text-color: #7979f9;
   --border-color: #444;
   --button-bg-color: #0056b3;
   --button-hover-bg-color: #007bff;
@@ -306,46 +322,68 @@ input:checked + .slider::before {
   color: var(--text-color);
 }
 
+/* Tab Navigation */
+.tab-navigation {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.tab-navigation button {
+  padding: 0.5rem 1rem;
+  background-color: var(--button-bg-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.tab-navigation button:hover {
+  background-color: var(--button-hover-bg-color);
+}
+
+.tab-navigation button.active {
+  background-color: var(--button-hover-bg-color);
+}
+
+/* Main Content */
+.main-content {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.tab-content {
+  padding: 1rem;
+  background-color: var(--background-color);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
 /* Search Bar Container (Top Center) */
 .search-container {
-  margin-top: 50px; /* Adjust based on site title height */
+  margin-top: 20px;
   width: 100%;
   display: flex;
   justify-content: center;
 }
 
-/* Main Content */
-.main-content {
-  display: flex;
+/* Results Wrapper (Center) */
+.results-wrapper {
   width: 100%;
   margin-top: 20px;
 }
 
-/* Latest Operations (Left Side) */
-.latest-operations {
-  flex: 1;
-  margin-right: 20px;
-}
-
-/* Results Wrapper (Center) */
-.results-wrapper {
-  flex: 2;
-  margin: 0 20px;
-}
-
 /* Wallets Wrapper (Right Side) */
 .wallets-wrapper {
-  flex: 1;
-  margin-left: 20px;
+  width: 100%;
+  margin-top: 20px;
 }
 
 /* GitHub Links (Bottom) */
 .github-links {
   position: center;
   margin-top: 20px;
-  /* bottom: 60px; Adjust based on source code reference height */
-  /* left: 50%; */
-  /* transform: translateX(-50%); */
   display: flex;
   gap: 20px;
 }
@@ -368,11 +406,6 @@ input:checked + .slider::before {
 .source-code {
   margin-top: 20px;
   position: center;
-  /* position: absolute; */
-  /* bottom: 20px; */
-  /* left: 50%; */
-  /* width: 100%; */
-  /* transform: translateX(-50%); */
   font-size: 0.9rem;
   color: var(--text-color);
 }
@@ -384,5 +417,19 @@ input:checked + .slider::before {
 
 .source-code a:hover {
   text-decoration: underline;
+}
+
+.refresh-button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.refresh-button:hover {
+  background-color: #0056b3;
 }
 </style>

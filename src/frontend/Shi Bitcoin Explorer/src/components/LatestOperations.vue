@@ -1,6 +1,9 @@
 <template>
   <div class="latest-operations">
-    <h2>Latest Activity</h2>
+    <h2>Latest Operations</h2>
+
+    <!-- Refresh Button -->
+    <button @click="refreshData" class="refresh-button">Refresh Data</button>
 
     <!-- Display Latest Block -->
     <div v-if="operations.latestBlock" class="latest-block">
@@ -69,8 +72,14 @@ export default {
     },
   },
   methods: {
+    // Format timestamp to a human-readable format
     formatTimestamp(timestamp) {
       return new Date(timestamp * 1000).toLocaleString()
+    },
+
+    // Emit an event to refresh the data
+    refreshData() {
+      this.$emit('refresh-data')
     },
   },
 }
@@ -88,6 +97,20 @@ h2 {
   margin-bottom: 1rem;
   font-size: 1.5rem;
   color: #333;
+}
+
+.refresh-button {
+  padding: 0.5rem 1rem;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-bottom: 1rem;
+}
+
+.refresh-button:hover {
+  background-color: #0056b3;
 }
 
 .latest-block,
