@@ -8,6 +8,7 @@ from decouple import config
 import logging
 import traceback
 from bitcoinrpc.authproxy import AuthServiceProxy, JSONRPCException
+from urllib.parse import quote
 
 from restrictions import ALLOWED_IPS
 
@@ -28,8 +29,25 @@ logging.basicConfig(
 
 
 # Initialize Bitcoin Core RPC connection
-def get_rpc_connection():
-    return AuthServiceProxy(f"http://{RPC_USER}:{RPC_PASS}@{RPC_HOST}:{RPC_PORT}")
+def get_rpc_connection(wallet_name=None):
+    try:
+        # Ensure RPC_PORT is a valid integer
+        port = int(RPC_PORT)
+    except ValueError:
+        logging.error(f"Invalid RPC_PORT value: {RPC_PORT}. Using default port.")
+        port = 18443  # Default port
+
+    # URL-encode the password to handle special characters
+    encoded_password = quote(RPC_PASS, safe="")
+
+    # Construct the RPC URL
+    if wallet_name:
+        rpc_url = f"http://{RPC_USER}:{encoded_password}@{RPC_HOST}:{port}/wallet/{wallet_name}"
+    else:
+        rpc_url = f"http://{RPC_USER}:{encoded_password}@{RPC_HOST}:{port}"
+
+    # logging.debug(f"RPC URL: {rpc_url}")  # Log the RPC URL for debugging
+    return AuthServiceProxy(rpc_url)
 
 
 # Configure rate limiting
@@ -116,11 +134,32 @@ def create_wallet():
         return jsonify({"error": "Wallet name is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
+        rpc = get_rpc_connection()  # Use default RPC URL for wallet creation
+
+        # Check if the wallet already exists
+        wallets = rpc.listwallets()
+        if wallet_name in wallets:
+            return jsonify({"message": f"Wallet {wallet_name} already exists"}), 200
+
+        # Create the wallet
         rpc.createwallet(wallet_name)
-        return jsonify({"message": f"Wallet {wallet_name} created successfully"})
+
+        # Load the wallet to ensure it's available for future RPC calls
+        rpc.loadwallet(wallet_name)
+
+        return jsonify(
+            {"message": f"Wallet {wallet_name} created and loaded successfully"}
+        )
+
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/generate_address", methods=["POST"])
@@ -133,27 +172,50 @@ def generate_address():
         return jsonify({"error": "Wallet name is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
-        address = rpc.getnewaddress(wallet_name)
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
+        address = rpc.getnewaddress()
         return jsonify({"message": "New address generated", "address": address})
+
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/get_balance", methods=["GET"])
 @requires_auth
 def get_balance():
     wallet_name = request.args.get("wallet_name")
+    minconf = request.args.get("minconf", default=0, type=int)  # Default: 0
+    include_watchonly = request.args.get(
+        "include_watchonly", default=False, type=bool
+    )  # Default: False
+    avoid_reuse = request.args.get(
+        "avoid_reuse", default=False, type=bool
+    )  # Default: False
 
     if not wallet_name:
         return jsonify({"error": "Wallet name is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
-        balance = rpc.getbalance(wallet_name)
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
+        balance = rpc.getbalance("*", minconf, include_watchonly, avoid_reuse)
         return jsonify({"balance": balance})
+
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/send_transaction", methods=["POST"])
@@ -171,11 +233,19 @@ def send_transaction():
         )
 
     try:
-        rpc = get_rpc_connection()
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
         txid = rpc.sendtoaddress(to_address, amount)
         return jsonify({"message": "Transaction sent successfully", "txid": txid})
+
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/get_transaction_history", methods=["GET"])
@@ -187,11 +257,19 @@ def get_transaction_history():
         return jsonify({"error": "Wallet name is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
         transactions = rpc.listtransactions(wallet_name)
         return jsonify({"transactions": transactions})
+
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/mine", methods=["POST"])
@@ -205,14 +283,21 @@ def mine():
         return jsonify({"error": "Wallet name is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
         address = rpc.getnewaddress(wallet_name)
         block_hashes = rpc.generatetoaddress(num_blocks, address)
         return jsonify(
             {"message": "Block mined successfully", "block_hashes": block_hashes}
         )
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 # ------------------
@@ -227,7 +312,14 @@ def get_blockchain_info():
         blockchain_info = rpc.getblockchaininfo()
         return jsonify(blockchain_info)
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/getblockhash", methods=["GET"])
@@ -305,54 +397,19 @@ def get_transaction():
         return jsonify({"error": "Transaction ID is required"}), 400
 
     try:
-        rpc = get_rpc_connection()
-        transaction_data = rpc.gettransaction(txid)
-        return jsonify(transaction_data)
+        rpc = get_rpc_connection()  # No wallet_name needed for getrawtransaction
+        raw_transaction = rpc.getrawtransaction(txid)
+        decoded_transaction = rpc.decoderawtransaction(raw_transaction)
+        return jsonify(decoded_transaction)
     except JSONRPCException as e:
-        return jsonify({"error": str(e)}), 500
-
-
-# @app.route("/gettransaction", methods=["GET"])
-# @requires_auth
-# def get_transaction():
-#     txid = request.args.get("txid")
-#     if not txid:
-#         return jsonify({"error": "Transaction ID parameter is required"}), 400
-
-#     result1 = subprocess.run(
-#         ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
-#         stdout=subprocess.PIPE,
-#         text=True,
-#     )
-
-#     if result1.stdout == "":
-#         return jsonify({"error": "Invalid transaction ID"}), 400
-
-#     result2 = subprocess.run(
-#         ["bitcoin-cli", "-regtest", "decoderawtransaction", result1.stdout.strip("\n")],
-#         stdout=subprocess.PIPE,
-#         text=True,
-#     )
-#     try:
-#         data = json.loads(result2.stdout)
-#         return jsonify(data)
-#     except json.JSONDecodeError:
-#         return jsonify({"error": "Failed to parse transaction data"}), 500
-
-
-# @app.route("/getrawtransaction", methods=["GET"])
-# @requires_auth
-# def get_raw_transaction():
-#     txid = request.args.get("txid")
-#     if not txid:
-#         return jsonify({"error": "Transaction ID parameter is required"}), 400
-
-#     result1 = subprocess.run(
-#         ["bitcoin-cli", "-regtest", "getrawtransaction", txid],
-#         stdout=subprocess.PIPE,
-#         text=True,
-#     )
-#     return jsonify({"raw_transaction": result1.stdout.strip()})
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @app.route("/getrawtransaction", methods=["GET"])
@@ -371,31 +428,81 @@ def get_raw_transaction():
         return jsonify({"error": str(e)}), 500
 
 
-# # Send a transaction
-# @app.route("/send_transaction", methods=["POST"])
-# def send_transaction_route():
-#     data = request.get_json()
-#     wallet_name = data.get("wallet_name")
-#     password = data.get("password")
-#     salt = data.get("salt")
-#     to_address = data.get("to_address")
-#     amount = data.get("amount")
+@requires_auth
+def list_wallets():
+    try:
+        rpc = get_rpc_connection()  # No wallet_name needed for listwallets
+        wallets = rpc.listwallets()
+        return jsonify({"wallets": wallets})
+    except JSONRPCException as e:
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
-#     if not wallet_name or not password or not salt or not to_address or not amount:
-#         return (
-#             jsonify(
-#                 {
-#                     "error": "Wallet name, password, salt, recipient address, and amount are required"
-#                 }
-#             ),
-#             400,
-#         )
 
-#     try:
-#         result = send_transaction(wallet_name, password, salt, to_address, amount)
-#         return jsonify(result)
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
+@app.route("/generate_multi_address", methods=["POST"])
+@requires_auth
+def generate_multi_address():
+    data = request.get_json()
+    wallet_name = data.get("wallet_name")
+    num_addresses = data.get("num_addresses", 1)  # Default: 1 address
+
+    if not wallet_name:
+        return jsonify({"error": "Wallet name is required"}), 400
+
+    if num_addresses < 1 or num_addresses > 100:
+        return jsonify({"error": "Number of addresses must be between 1 and 100"}), 400
+
+    try:
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
+        addresses = [rpc.getnewaddress() for _ in range(num_addresses)]
+        return jsonify(
+            {"message": "Addresses generated successfully", "addresses": addresses}
+        )
+    except JSONRPCException as e:
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/list_addresses", methods=["GET"])
+@requires_auth
+def list_addresses():
+    wallet_name = request.args.get("wallet_name")
+
+    if not wallet_name:
+        return jsonify({"error": "Wallet name is required"}), 400
+
+    try:
+        rpc = get_rpc_connection(wallet_name)  # Pass wallet_name to get_rpc_connection
+        addresses = rpc.getaddressesbylabel(
+            ""
+        )  # Use default label to get all addresses
+        return jsonify(
+            {
+                "message": "Addresses listed successfully",
+                "addresses": list(addresses.keys()),
+            }
+        )
+    except JSONRPCException as e:
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 if __name__ == "__main__":
