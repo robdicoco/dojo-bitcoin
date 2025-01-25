@@ -44,6 +44,7 @@
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | [Dojo Bicoin - Desafio Wallet CLI](https://www.linkedin.com/posts/kledenilson_walletabrcli-blockchain-doidosabrdescentralizados-activity-7286739091105177603-g89o/)                                                 | Doidos Descentralizados |
 | [How to Create Your Own Bitcoin API Server Using Flask](https://medium.com/@pavusa/how-to-create-your-own-bitcoin-api-server-using-flask-7023d2f55ae4)                                                              |  Shi Satoshi            |
+| [How to Integrate Vue.js with Your Bitcoin API Server](https://medium.com/@pavusa/how-to-integrate-vue-js-with-your-bitcoin-api-server-9a30118b16ab)                                                                |  Shi Satoshi            |
 
 
 
