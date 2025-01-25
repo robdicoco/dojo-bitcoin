@@ -36,13 +36,15 @@
 | [Desenvolvimento de um Explorer para rede Bitcoin e Lightning Network ! 😲](https://www.linkedin.com/posts/marciomoraisoficial_bitcoin-blockchain-tecnologia-activity-7284595376441974784-AZuq/)                    | Cruzados do Código      |
 | [Dojo Bitcoin Challenge: Overcoming Obstacles in Block Explorer Development](https://www.linkedin.com/posts/zackson-pessoa_softwaredevelopment-bitcoin-blockexplorer-activity-7284721160909447169-9OHB/)            | Anácriptos              |
 | [Dojo Bitcoin - Desafio Blockchain Explorer](https://www.linkedin.com/posts/kledenilson_doidosabrdescentralizados-nearx-bitcoin-activity-7285334686816440320-t_fu/)                                                 | Doidos Descentralizados |
-| [How to Set Up and Run a Bitcoin Node on Regtest Mode Using Linode](https://medium.com/@pavusa/how-to-set-up-and-run-a-bitcoin-node-on-regtest-mode-using-linode-508c355bf1c3)                                      |  Shi Satoshi             |
+| [How to Set Up and Run a Bitcoin Node on Regtest Mode Using Linode](https://medium.com/@pavusa/how-to-set-up-and-run-a-bitcoin-node-on-regtest-mode-using-linode-508c355bf1c3)                                      |  Shi Satoshi            |
 
 ## ✅ Semana 2
 
 | Link do Post                                                                                                                                                                                                        | Equipe                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
 | [Dojo Bicoin - Desafio Wallet CLI](https://www.linkedin.com/posts/kledenilson_walletabrcli-blockchain-doidosabrdescentralizados-activity-7286739091105177603-g89o/)                                                 | Doidos Descentralizados |
+| [How to Create Your Own Bitcoin API Server Using Flask](https://medium.com/@pavusa/how-to-create-your-own-bitcoin-api-server-using-flask-7023d2f55ae4)                                                              |  Shi Satoshi            |
+
 
 
 **✍️ Aula**
