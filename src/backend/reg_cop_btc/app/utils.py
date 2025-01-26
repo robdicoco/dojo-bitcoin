@@ -16,13 +16,12 @@ def get_bitcoin_rpc():
     )
 
 
-def create_wallet(rpc):
+def generate_payment_address(rpc):
     """
-    Create a new Bitcoin wallet and return the address and private key.
+    Create a new Bitcoin wallet and return the address.
     """
     address = rpc.getnewaddress()
-    private_key = rpc.dumpprivkey(address)
-    return address, private_key
+    return address
 
 
 def validate_payment(rpc, address, amount):

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from ..models import Document, Wallet
 from ..database import get_db
-from ..utils import get_bitcoin_rpc, create_wallet
+from ..utils import get_bitcoin_rpc, generate_payment_address
 import hashlib
 from pydantic import BaseModel
 
@@ -38,7 +38,7 @@ async def upload_document(request: UploadRequest, db: Session = Depends(get_db))
 
     # Create a new wallet
     rpc = get_bitcoin_rpc()
-    address = create_wallet(rpc)
+    address = generate_payment_address(rpc)
 
     # Save document and wallet to the database
     db_document = Document(document_hash=document_hash, wallet_address=address)

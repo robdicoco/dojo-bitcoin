@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
@@ -16,6 +16,5 @@ class Document(Base):
 class Wallet(Base):
     __tablename__ = "wallets"
     id = Column(Integer, primary_key=True, index=True)
-    private_key = Column(String)
     address = Column(String, unique=True, index=True)
     document_hash = Column(String, ForeignKey("documents.document_hash"))

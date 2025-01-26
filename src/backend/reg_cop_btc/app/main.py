@@ -20,21 +20,26 @@ def create_tables():
     # Ensure the Bitcoin wallet exists
     rpc = get_bitcoin_rpc()
     wallet_name = os.getenv("BITCOIN_WALLET_NAME", "registry_wallet")
+
     try:
-        rpc.loadwallet(wallet_name)
+        # Check if the wallet is already created
+        wallets = rpc.listwallets()
+        if wallet_name not in wallets:
+            print(f"Wallet '{wallet_name}' not loaded. Creating it...")
+            rpc.createwallet(wallet_name)
     except Exception as e:
         if "Wallet file not found" in str(e):
-            print(f"Wallet '{wallet_name}' not found. Creating it...")
-            rpc.createwallet(wallet_name)
+            print(f"Wallet '{wallet_name}' not found.")
+            raise e
         elif "Wallet file verification failed" in str(e):
             print(
                 f"Wallet '{wallet_name}' verification failed. Creating a new wallet..."
             )
-            rpc.createwallet(wallet_name)
+            raise e
         else:
             raise e
 
 
 @app.get("/")
 def read_root():
-    return {"message": "Bitcoin Challenge Backend"}
+    return {"message": "Bitcoin Challenge 3 Backend"}
