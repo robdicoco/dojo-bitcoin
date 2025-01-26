@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from ..models import Document
 from ..database import get_db
 from ..utils import get_bitcoin_rpc, send_op_return_transaction
-import time
-from pydantic import BaseModel
 
 router = APIRouter()
 

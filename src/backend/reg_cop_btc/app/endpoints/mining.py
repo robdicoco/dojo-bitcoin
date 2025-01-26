@@ -4,7 +4,6 @@ from pydantic import BaseModel
 from ..models import Document
 from ..database import get_db
 from ..utils import get_bitcoin_rpc, check_mining_confirmation
-from pydantic import BaseModel
 
 router = APIRouter()
 
