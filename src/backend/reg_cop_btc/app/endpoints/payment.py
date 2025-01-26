@@ -1,17 +1,27 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from ..models import Document
 from ..database import get_db
 from ..utils import get_bitcoin_rpc
+from pydantic import BaseModel
 
 router = APIRouter()
 
 
+class PaymentConfirmationRequest(BaseModel):
+    document_hash: str
+
+
 @router.post("/payment-confirmation")
-async def payment_confirmation(document_hash: str, db: Session = Depends(get_db)):
+async def payment_confirmation(
+    request: PaymentConfirmationRequest, db: Session = Depends(get_db)
+):
     """
     Check for payment events to the wallet address associated with the document.
     """
+    document_hash = request.document_hash
+
     # Fetch the document from the database
     document = (
         db.query(Document).filter(Document.document_hash == document_hash).first()

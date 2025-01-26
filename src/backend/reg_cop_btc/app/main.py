@@ -8,8 +8,8 @@ app = FastAPI()
 
 # Include the upload router
 app.include_router(upload.router, tags=["upload"])
-app.include_router(payment.router, prefix="/payment", tags=["payment"])
-app.include_router(transaction.router, prefix="/transaction", tags=["transaction"])
+app.include_router(payment.router, tags=["payment-confirmation"])
+app.include_router(transaction.router, tags=["transaction"])
 
 
 # Create database tables on startup

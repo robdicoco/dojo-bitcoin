@@ -37,8 +37,12 @@ def validate_payment(rpc, address, amount):
 
 
 def send_op_return_transaction(rpc, document_hash):
+    """
+    Send a transaction with the document hash in the OP_RETURN field.
+    """
+    # Create a raw transaction with OP_RETURN
     op_return_data = f"OP_RETURN {document_hash}"
     tx_id = rpc.sendtoaddress(
-        rpc.getnewaddress(), 0.0001, "", "", False, True, 6, "UNSET", op_return_data
+        rpc.getnewaddress(), 0.0000, "", "", False, True, 6, "UNSET", op_return_data
     )
     return tx_id
