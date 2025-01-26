@@ -46,3 +46,16 @@ def send_op_return_transaction(rpc, document_hash):
         rpc.getnewaddress(), 0.0000, "", "", False, True, 6, "UNSET", op_return_data
     )
     return tx_id
+
+
+def check_mining_confirmation(rpc, tx_id):
+    """
+    Check if the transaction has been confirmed (mined into a block).
+    """
+    try:
+        tx_info = rpc.gettransaction(tx_id)
+        if tx_info.get("confirmations", 0) >= 1:
+            return True
+        return False
+    except Exception as e:
+        raise e

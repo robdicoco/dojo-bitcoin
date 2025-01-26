@@ -19,8 +19,7 @@ async def send_transaction(
 ):
     """
     Send a transaction with the document hash in the OP_RETURN field.
-    - Wait for mining confirmation.
-    - Update the document status to "Mining Completed".
+    - Returns the transaction ID (tx_id).
     """
     document_hash = request.document_hash
 
@@ -38,12 +37,8 @@ async def send_transaction(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    # Wait for mining confirmation (simulate by mining a block)
-    rpc.generatetoaddress(1, rpc.getnewaddress())
-
-    # Update the document status
-    document.status = "Mining Completed"
+    # Update the document with the transaction ID
     document.tx_id = tx_id
     db.commit()
 
-    return {"status": "Mining Completed", "tx_id": tx_id}
+    return {"tx_id": tx_id}

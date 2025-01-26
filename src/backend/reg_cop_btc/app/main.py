@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from .database import engine, Base
-from .endpoints import upload, payment, transaction
+from .endpoints import upload, payment, transaction, mining
 from .utils import get_bitcoin_rpc
 import os
 
@@ -10,6 +10,7 @@ app = FastAPI()
 app.include_router(upload.router, tags=["upload"])
 app.include_router(payment.router, tags=["payment-confirmation"])
 app.include_router(transaction.router, tags=["transaction"])
+app.include_router(mining.router, tags=["mining-confirmation"])
 
 
 # Create database tables on startup
