@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true, // Required for virtual hosted sites
         rewrite: (path) => path.replace(/^\/api/, ''), // Remove `/api` prefix
       },
+      '/api2': {
+        target: 'http://127.0.0.1:8000', // Backend server URL
+        changeOrigin: true, // Required for virtual hosted sites
+        rewrite: (path) => path.replace(/^\/api2/, ''), // Remove `/api2` prefix
+      },
     },
   },
 })

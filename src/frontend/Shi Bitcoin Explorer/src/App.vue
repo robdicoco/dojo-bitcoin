@@ -25,6 +25,9 @@
       >
         Latest Operations
       </button>
+      <button :class="{ active: activeTab === 'registry' }" @click="activeTab = 'registry'">
+        Registry
+      </button>
     </div>
 
     <!-- Main Content -->
@@ -51,6 +54,11 @@
       <!-- Latest Operations Tab -->
       <div v-if="activeTab === 'latest-operations'" class="tab-content">
         <LatestOperations :operations="latestOperations" @refresh-data="fetchLatestOperations" />
+      </div>
+
+      <!-- Registry Tab -->
+      <div v-if="activeTab === 'registry'" class="tab-content">
+        <Registry />
       </div>
     </div>
 
@@ -81,6 +89,7 @@ import SearchBar from './components/SearchBar.vue'
 import Results from './components/Results.vue'
 import Wallets from './components/Wallets.vue'
 import LatestOperations from './components/LatestOperations.vue'
+import Registry from './components/Registry.vue' // Import the new Registry component
 import axios from 'axios'
 
 export default {
@@ -90,6 +99,7 @@ export default {
     Results,
     Wallets,
     LatestOperations,
+    Registry, // Add the Registry component
   },
   data() {
     return {
