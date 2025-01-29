@@ -20,6 +20,10 @@
 <script>
 export default {
   props: {
+    documentHash: {
+      type: String,
+      required: true,
+    },
     walletAddress: {
       type: String,
       default: '',
@@ -38,8 +42,8 @@ export default {
   },
   methods: {
     async checkPaymentStatus() {
-      if (!this.walletAddress) {
-        this.error = 'Wallet address is missing.'
+      if (!this.documentHash) {
+        this.error = 'Document hash is missing.'
         return
       }
 
@@ -47,7 +51,16 @@ export default {
       this.error = ''
 
       try {
-        const response = await fetch(`/api2/check-payment?walletAddress=${this.walletAddress}`)
+        const response = await fetch('/reg/payment-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            document_hash: this.documentHash,
+          }),
+        })
+
         if (!response.ok) {
           throw new Error('Failed to check payment status.')
         }

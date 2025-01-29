@@ -17,19 +17,49 @@ export default defineConfig({
       key: fs.readFileSync(path.resolve(__dirname, '../keys/privkey.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, '../keys/fullchain.pem')),
     },
-    port: 5173, // Optional: Specify a port (default is 5173)
+    port: 5173,
+    host: 'shisatoshi.758206.xyz', // Explicitly set the host
+    hmr: {
+      host: 'shisatoshi.758206.xyz', // Set HMR host to match the server
+      port: 5173, // Set HMR port to match the server
+    },
     proxy: {
-      '/api': {
-        target: 'https://shisatoshi.758206.xyz:5000', // Backend server URL
-        changeOrigin: true, // Required for virtual hosted sites
-        rewrite: (path) => path.replace(/^\/api/, ''), // Remove `/api` prefix
-        secure: true, // Disable SSL verification (not recommended for production)
+      '/reg': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/reg/, ''),
+        secure: false,
+        // onProxyReq: (proxyReq, req, res) => {
+        //   console.log('Proxying request:', req.url) // Debugging
+        // },,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Proxying request:', req.url) // Log the request URL
+          })
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Proxy response:', proxyRes.statusCode) // Log the response status
+          })
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err) // Log any errors
+          })
+        },
       },
-      '/api2': {
-        target: 'http://127.0.0.1:8000', // Backend server URL
-        changeOrigin: true, // Required for virtual hosted sites
-        rewrite: (path) => path.replace(/^\/api2/, ''), // Remove `/api2` prefix
-        secure: false, // Disable SSL verification (not recommended for production)
+      '/api': {
+        target: 'https://shisatoshi.758206.xyz:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: true,
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq, req, res) => {
+            console.log('Proxying request:', req.url) // Log the request URL
+          })
+          proxy.on('proxyRes', (proxyRes, req, res) => {
+            console.log('Proxy response:', proxyRes.statusCode) // Log the response status
+          })
+          proxy.on('error', (err, req, res) => {
+            console.error('Proxy error:', err) // Log any errors
+          })
+        },
       },
     },
   },

@@ -16,7 +16,7 @@ export default {
   props: {
     transactionId: {
       type: String,
-      default: '',
+      required: true,
     },
   },
   data() {
@@ -25,20 +25,19 @@ export default {
       error: '',
     }
   },
-  watch: {
-    transactionId: {
-      immediate: true,
-      handler(newId) {
-        if (newId) {
-          this.fetchBlockchainUrl(newId)
-        }
-      },
-    },
-  },
   methods: {
-    async fetchBlockchainUrl(transactionId) {
+    async fetchBlockchainUrl() {
       try {
-        const response = await fetch(`/api2/blockchain-link?transactionId=${transactionId}`)
+        const response = await fetch('/reg/mining-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            tx_id: this.transactionId,
+          }),
+        })
+
         if (!response.ok) {
           throw new Error('Failed to fetch blockchain link.')
         }
@@ -48,6 +47,16 @@ export default {
       } catch (err) {
         this.error = err.message || 'An error occurred while fetching the blockchain link.'
       }
+    },
+  },
+  watch: {
+    transactionId: {
+      immediate: true,
+      handler(newId) {
+        if (newId) {
+          this.fetchBlockchainUrl()
+        }
+      },
     },
   },
 }

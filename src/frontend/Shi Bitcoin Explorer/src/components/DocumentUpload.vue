@@ -1,12 +1,12 @@
 <template>
   <div class="document-upload">
     <h3>Upload Document</h3>
-    <input type="file" @change="handleFileUpload" />
-    <button @click="uploadDocument" :disabled="!file || isUploading">
+    <textarea v-model="documentText" placeholder="Enter your document text"></textarea>
+    <button @click="uploadDocument" :disabled="!documentText || isUploading">
       {{ isUploading ? 'Uploading...' : 'Upload Document' }}
     </button>
     <p v-if="fileHash">
-      File Hash: <code>{{ fileHash }}</code>
+      Document Hash: <code>{{ fileHash }}</code>
     </p>
     <p v-if="error" class="error">{{ error }}</p>
   </div>
@@ -18,21 +18,16 @@ import { sha256 } from 'crypto-hash'
 export default {
   data() {
     return {
-      file: null,
+      documentText: '',
       fileHash: '',
       isUploading: false,
       error: '',
     }
   },
   methods: {
-    async handleFileUpload(event) {
-      this.file = event.target.files[0]
-      const fileBuffer = await this.file.arrayBuffer()
-      this.fileHash = await sha256(fileBuffer)
-    },
     async uploadDocument() {
-      if (!this.file) {
-        this.error = 'Please select a file to upload.'
+      if (!this.documentText) {
+        this.error = 'Please enter document text.'
         return
       }
 
@@ -40,14 +35,18 @@ export default {
       this.error = ''
 
       try {
-        const response = await fetch('/api2/upload', {
+        // Generate SHA-256 hash of the document
+        this.fileHash = await sha256(this.documentText)
+
+        // Send the document and hash to the backend
+        const response = await fetch('/reg/upload', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            fileHash: this.fileHash,
-            fileName: this.file.name,
+            document: this.documentText,
+            document_hash: this.fileHash,
           }),
         })
 
@@ -72,7 +71,9 @@ export default {
   margin-bottom: 2rem;
 }
 
-input[type='file'] {
+textarea {
+  width: 100%;
+  height: 100px;
   margin-bottom: 1rem;
 }
 
