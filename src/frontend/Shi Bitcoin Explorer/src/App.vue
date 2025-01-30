@@ -58,7 +58,7 @@
 
       <!-- Registry Tab -->
       <div v-if="activeTab === 'registry'" class="tab-content">
-        <Registry />
+        <Registry2 />
       </div>
     </div>
 
@@ -89,7 +89,7 @@ import SearchBar from './components/SearchBar.vue'
 import Results from './components/Results.vue'
 import Wallets from './components/Wallets.vue'
 import LatestOperations from './components/LatestOperations.vue'
-import Registry from './components/Registry.vue' // Import the new Registry component
+import Registry2 from './components/Registry2.vue'
 import axios from 'axios'
 
 export default {
@@ -99,7 +99,7 @@ export default {
     Results,
     Wallets,
     LatestOperations,
-    Registry, // Add the Registry component
+    Registry2,
   },
   data() {
     return {

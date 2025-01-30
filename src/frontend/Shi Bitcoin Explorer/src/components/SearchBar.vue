@@ -17,11 +17,12 @@ export default {
     return {
       inputValue: '', // User input value
       error: '', // Error message
+      rawTransaction: null,
     }
   },
   methods: {
     // Function to detect the type of input
-    detectInputType(input) {
+    async detectInputType(input) {
       input = input.trim()
 
       // Check if input is a block height (numeric)
@@ -34,10 +35,12 @@ export default {
         // Check if the input is a block hash or transaction ID
         // (Block hashes and transaction IDs are both 64-character hex strings)
         // For now, assume it's a transaction ID if it starts with '3b' (common for regtest txids)
-        if (input.startsWith('3b')) {
-          return 'txid'
-        } else {
+
+        await this.fetchRawTransaction(input)
+        if (this.rawTransaction == null) {
           return 'blockhash'
+        } else {
+          return 'txid'
         }
       }
 
@@ -60,7 +63,7 @@ export default {
       }
 
       // Detect the input type
-      const inputType = this.detectInputType(this.inputValue)
+      const inputType = await this.detectInputType(this.inputValue)
 
       // Determine the API endpoint based on the input type
       let endpoint = ''
@@ -80,7 +83,7 @@ export default {
           params = { txid: this.inputValue }
           break
         case 'address':
-          endpoint = 'getbalance'
+          endpoint = 'balance'
           params = { address: this.inputValue }
           break
         default:
@@ -113,6 +116,18 @@ export default {
           // Something happened in setting up the request
           this.error = 'Error setting up the request.'
         }
+      }
+    },
+
+    async fetchRawTransaction(txid) {
+      try {
+        const response = await axios.get('/api/getrawtransaction', {
+          params: { txid: txid },
+        })
+        this.rawTransaction = response.data
+      } catch (error) {
+        console.info('Error fetching raw transaction:', error)
+        this.rawTransaction = null
       }
     },
   },
