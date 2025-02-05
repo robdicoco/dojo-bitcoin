@@ -396,6 +396,7 @@ def get_raw_transaction():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/list_wallets", methods=["GET"])
 @requires_auth
 def list_wallets():
     try:
@@ -554,6 +555,100 @@ def get_latest_activity():
     except Exception as e:
         logging.error(f"Unexpected Error: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/get_address_balance", methods=["GET"])
+@requires_auth
+def get_address_balance():
+    address = request.args.get("address")
+
+    if not address:
+        return jsonify({"error": "Address is required"}), 400
+
+    try:
+        rpc = get_rpc_connection()  # No wallet name needed
+
+        # Wrap the address in a descriptor format
+        descriptor = f"addr({address})"
+
+        # Use scantxoutset to scan the UTXO set for the address
+        scan_result = rpc.scantxoutset("start", [descriptor])
+
+        # Extract the total amount from the scan result
+        balance = scan_result.get("total_amount", 0)
+
+        return jsonify({"address": address, "balance": balance})
+
+    except JSONRPCException as e:
+        logging.error(f"RPC Error: {str(e)}")
+        return jsonify({"error": f"RPC Error: {str(e)}"}), 500
+    except ConnectionError as e:
+        logging.error(f"Connection Error: {str(e)}")
+        return jsonify({"error": "Failed to connect to Bitcoin Core RPC server"}), 500
+    except Exception as e:
+        logging.error(f"Unexpected Error: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
+
+
+@app.route("/get_op_return", methods=["GET"])
+@requires_auth
+def get_op_return():
+    txid = request.args.get("txid")
+
+    if not txid:
+        return jsonify({"error": "Transaction ID (txid) is required"}), 400
+
+    try:
+        rpc = get_rpc_connection()  # No wallet name needed
+
+        # Get the raw transaction
+        raw_tx = rpc.getrawtransaction(txid)
+
+        # Decode the raw transaction
+        decoded_tx = rpc.decoderawtransaction(raw_tx)
+
+        # Iterate through the outputs to find the OP_RETURN data
+        op_return_data = None
+        for output in decoded_tx["vout"]:
+            if "scriptPubKey" in output and "asm" in output["scriptPubKey"]:
+                asm = output["scriptPubKey"]["asm"]
+                if asm.startswith("OP_RETURN"):
+                    # Extract the OP_RETURN data
+                    hex_data = asm.split("OP_RETURN ")[1]
+
+                    # Decode the hexadecimal data to a string
+                    try:
+                        op_return_data = bytes.fromhex(hex_data).decode("utf-8")
+                    except UnicodeDecodeError:
+                        # If decoding fails, return the raw hex data
+                        op_return_data = hex_data
+                    break
+
+        if op_return_data:
+            # Extract the file_hash from the OP_RETURN data
+            if op_return_data.startswith("OP_RETURN "):
+                file_hash = op_return_data.split("OP_RETURN ")[1]
+            if op_return_data.startswith("jJOP_RETURN "):
+                file_hash = op_return_data.split("jJOP_RETURN ")[1]
+            else:
+                file_hash = op_return_data
+
+            # Ensure the file_hash is clean (no extra prefixes or suffixes)
+            file_hash = file_hash.strip()
+
+            return jsonify(
+                {
+                    "txid": txid,
+                    "op_return_data": hex_data,  # The raw hex data
+                    "file_hash": file_hash,  # The extracted file hash
+                }
+            )
+        else:
+            return jsonify({"error": "No OP_RETURN data found in the transaction"}), 404
+
+    except Exception as e:
+        logging.error(f"Error: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

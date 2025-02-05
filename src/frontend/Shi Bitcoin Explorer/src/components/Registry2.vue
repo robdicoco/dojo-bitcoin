@@ -68,6 +68,16 @@
       <button @click="confirmMining">Confirm Mining</button>
       <p v-if="miningResponse">Response: {{ miningResponse }}</p>
     </div>
+
+    <!-- Get Transaction Data in -->
+    <div class="section">
+      <h2>5. Get Transaction Data OP</h2>
+      <input v-model="validateTxId" placeholder="Enter transaction ID" />
+      <button @click="getOPData">Get Data</button>
+      <textarea v-if="validateResponse" rows="3" cols="80">
+Response: {{ validateResponse }}</textarea
+      >
+    </div>
   </div>
 </template>
 
@@ -96,6 +106,9 @@ export default {
 
       miningTxId: '',
       miningResponse: null,
+
+      validateTxId: '',
+      validateResponse: null,
     }
   },
   methods: {
@@ -155,6 +168,16 @@ export default {
         this.miningResponse = response.data
       } catch (error) {
         this.miningResponse = `Error: ${error.message}`
+      }
+    },
+    async getOPData() {
+      try {
+        const response = await axios.get('api/get_op_return', {
+          params: { txid: this.validateTxId },
+        })
+        this.validateResponse = response.data
+      } catch (error) {
+        this.validateResponse = `Error: ${error.message}`
       }
     },
 

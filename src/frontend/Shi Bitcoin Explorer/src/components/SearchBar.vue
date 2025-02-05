@@ -83,7 +83,7 @@ export default {
           params = { txid: this.inputValue }
           break
         case 'address':
-          endpoint = 'balance'
+          endpoint = 'get_address_balance'
           params = { address: this.inputValue }
           break
         default:
@@ -91,7 +91,7 @@ export default {
             'Invalid input. Please enter a valid block height, block hash, transaction ID, or address.'
           return
       }
-
+      console.info('endpoint:', endpoint)
       try {
         // Make the API call
         const response = await axios.get(`/api/${endpoint}`, { params })
